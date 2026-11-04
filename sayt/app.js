@@ -34,8 +34,9 @@ function karkas() {
   const mag = esc(D.magazin || "Мой магазин");
   $("#chip-m").innerHTML = `<b>OZON</b>${mag}`;
   const ob = D.obnovleno ? new Date(D.obnovleno) : null;
-  $("#niz").innerHTML = `<b>${mag}</b>Обновлено ${ob ? ob.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "—"}<br><a href="/vyhod">${ik("log-out").replace("<svg", '<svg style="width:13px;height:13px;vertical-align:-2px"')} Выйти</a>`;
-  $("#foot").textContent = `Dashboard Ozon ${D.versiya || ""} · данные Ozon Seller API`;
+  $("#niz").innerHTML = `<b>${mag}</b>Обновлено ${ob ? ob.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "—"}<br><a href="#" id="vyhod">${ik("log-out").replace("<svg", '<svg style="width:13px;height:13px;vertical-align:-2px"')} Выйти</a>`;
+  $("#foot").textContent = `Dashboard Ozon ${D.versiya || ""} · данные Ozon Seller API · заперто вашим паролем`;
+  $("#vyhod").onclick = e => { e.preventDefault(); zabytKlyuch(); location.reload(); };
 }
 
 function razdel() {
@@ -283,12 +284,13 @@ let NS = null, SHA = null;
 async function nastroyki() {
   $("#ekran").innerHTML = `<div class="shapka"><div><h1>Настройки</h1><div class="pod">сохраняются в вашу копию на GitHub, пересчёт — сам</div></div></div><div class="card"><div class="pusto-blok">Загружаю настройки…</div></div>`;
   try {
-    const r = await fetch("/api/nastroyki"); const o = await r.json();
-    if (!r.ok) throw new Error(o.oshibka || r.status);
-    NS = o.nastroyki || { magazin: "", tovary: {}, nalog: [{ s: "2020-01-01", rezhim: "usn_dohody", usn: 0.06, nds: 0 }], opr: [], istoriya_s: null }; SHA = o.sha;
+    const r = await gh("/contents/nastroyki.json");
+    if (r.status === 404) { NS = null; SHA = null; }
+    else { const o = await r.json(); if (!r.ok) throw new Error(o.message || r.status); NS = JSON.parse(b64iz(o.content)); SHA = o.sha; }
+    NS = NS || { magazin: "", tovary: {}, nalog: [{ s: "2020-01-01", rezhim: "usn_dohody", usn: 0.06, nds: 0 }], opr: [], istoriya_s: null };
   } catch (e) {
     $("#ekran").innerHTML = `<div class="shapka"><h1>Настройки</h1></div><div class="card o"><div class="hd"><div class="ico">${ik("triangle-alert")}</div><div><h2>Настройки недоступны</h2><div class="s">${esc(e.message)}</div></div></div>
-      <p class="podskazka">Страница сохраняет настройки в вашу копию на GitHub. Для этого в Cloudflare у Worker должны быть заданы GITHUB_TOKEN и GITHUB_REPO — шаг 6 инструкции.</p></div>`; return;
+      <p class="podskazka">Страница сохраняет настройки прямо в вашу копию на GitHub — по пропуску из секрета PROPUSK_GITHUB (шаги 3 и 5 инструкции). Нет секрета или прошёл срок пропуска — выпустите новый и положите в сейф GitHub; страница подхватит его после ближайшего сбора.</p></div>`; return;
   }
   for (const a of Object.keys(D.tovary || {})) if (!NS.tovary[a]) NS.tovary[a] = { zakupka: null, ff: 0, vykup: null, skryt: false };
   risovatNastroyki();
@@ -338,8 +340,8 @@ function risovatNastroyki() {
   $("#plus-nalog").onclick = () => { sobrat(); const p = NS.nalog[NS.nalog.length - 1] || { usn: 0.06, nds: 0, rezhim: "usn_dohody" }; NS.nalog.push({ ...p, s: new Date().toISOString().slice(0, 10) }); risovatNastroyki(); };
   $("#plus-opr").onclick = () => { sobrat(); (NS.opr = NS.opr || []).push({ s: new Date().toISOString().slice(0, 10), summa: 0 }); risovatNastroyki(); };
   $("#sohr").onclick = sohranit;
-  $("#sobrat").onclick = () => zapusk("/api/sobrat", "Пересчёт запущен — новые цифры появятся через 3–5 минут");
-  $("#obnovit").onclick = () => { if (confirm("Подтянуть свежую версию инструмента? Настройки и история не изменятся.")) zapusk("/api/obnovit", "Обновление запущено — через пару минут обновите страницу"); };
+  $("#sobrat").onclick = () => zapusk("sbor.yml", "Пересчёт запущен — новые цифры появятся через 3–5 минут");
+  $("#obnovit").onclick = () => { if (confirm("Подтянуть свежую версию робота? Настройки и история не изменятся.")) zapusk("obnovit.yml", "Обновление запущено — через пару минут нажмите «Пересчитать сейчас»"); };
   statusZapuskov();
 }
 function sobrat() {
@@ -353,25 +355,108 @@ function sobrat() {
 async function sohranit() {
   sobrat(); const b = $("#sohr"); b.disabled = true;
   try {
-    const r = await fetch("/api/nastroyki", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nastroyki: NS, sha: SHA }) });
-    const o = await r.json(); if (!r.ok) throw new Error(o.oshibka || r.status);
-    SHA = o.sha; soob("Сохранено. Пересчёт начнётся сам — новые цифры через 3–5 минут");
+    const osh = proverit(NS); if (osh) throw new Error("проверьте поле: " + osh);
+    const r = await gh("/contents/nastroyki.json", "PUT", { message: "Настройки изменены на странице", ...(SHA ? { sha: SHA } : {}),
+      content: b64v(JSON.stringify(NS, null, 2) + "\n") });
+    const o = await r.json();
+    if (r.status === 409) throw new Error("настройки только что изменились в другом окне — обновите страницу");
+    if (!r.ok) throw new Error(o.message || r.status);
+    SHA = o.content.sha; await gh("/actions/workflows/sbor.yml/dispatches", "POST", { ref: "main" });
+    soob("Сохранено. Пересчёт начнётся сам — новые цифры через 3–5 минут");
   } catch (e) { soob("Не сохранилось: " + e.message, true); }
   b.disabled = false;
 }
-async function zapusk(put, tekst) {
-  try { const r = await fetch(put, { method: "POST" }); const o = await r.json(); if (!r.ok) throw new Error(o.oshibka || r.status); soob(tekst); setTimeout(statusZapuskov, 4000); }
+async function zapusk(zadacha, tekst) {
+  try { const r = await gh(`/actions/workflows/${zadacha}/dispatches`, "POST", { ref: "main" });
+    if (!r.ok) { const o = await r.json().catch(() => ({})); throw new Error(o.message || r.status); }
+    soob(tekst); setTimeout(statusZapuskov, 4000); }
   catch (e) { soob("Не получилось: " + e.message, true); }
 }
 async function statusZapuskov() {
-  try { const r = await fetch("/api/status"); const o = await r.json(); if (!r.ok) return;
-    const itog = z => z.status !== "completed" ? "идёт…" : z.itog === "success" ? "готово" : "ошибка";
-    $("#zapuski").innerHTML = "Последние запуски: " + o.zapuski.map(z => `${esc(z.imya)} — ${itog(z)} (${new Date(z.kogda).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})`).join(" · ");
+  try { const r = await gh("/actions/runs?per_page=5"); const o = await r.json(); if (!r.ok) return;
+    const itog = z => z.status !== "completed" ? "идёт…" : z.conclusion === "success" ? "готово" : "ошибка";
+    $("#zapuski").innerHTML = "Последние запуски: " + (o.workflow_runs || []).map(z => `${esc(z.name)} — ${itog(z)} (${new Date(z.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})`).join(" · ");
   } catch (e) {}
+}
+// проверка настроек перед сохранением — пределы от опечаток, а не от хозяина
+function proverit(n) {
+  const ch = (v, ot, do_) => v === null || v === "" || (typeof v === "number" && isFinite(v) && v >= ot && v <= do_);
+  const dt_ = v => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  if (typeof n.magazin !== "string" || n.magazin.length > 80) return "название магазина";
+  for (const [a, t] of Object.entries(n.tovary || {})) {
+    if (!ch(t.zakupka, 0, 1e6)) return `закупка «${a}»`;
+    if (!ch(t.ff ?? 0, 0, 1e5)) return `фулфилмент «${a}»`;
+    if (!ch(t.vykup, 0.05, 1)) return `выкуп «${a}» (от 5 до 100 %)`;
+  }
+  for (const z of n.nalog || []) { if (!dt_(z.s)) return "дата налога"; if (!ch(z.usn, 0, 0.2) || !ch(z.nds ?? 0, 0, 0.25)) return "ставка налога"; }
+  for (const z of n.opr || []) if (!dt_(z.s) || !ch(z.summa, 0, 1e8)) return "свои расходы";
+  if (n.istoriya_s && !dt_(n.istoriya_s)) return "дата начала истории";
+  return null;
+}
+
+// ── GitHub пользователя: настройки и запуск робота — напрямую из браузера ─────────
+let GH = null;
+const enc = new TextEncoder();
+const b64v = s => { const b = enc.encode(s); let t = ""; for (let i = 0; i < b.length; i += 8192) t += String.fromCharCode(...b.subarray(i, i + 8192)); return btoa(t); };
+const b64iz = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
+function gh(put, metod = "GET", telo) {
+  if (!GH || !GH.token || !GH.repo) return Promise.reject(new Error("нет пропуска GitHub (секрет PROPUSK_GITHUB)"));
+  return fetch(`https://api.github.com/repos/${GH.repo}${put}`, { method: metod, cache: "no-store",
+    headers: { Authorization: `Bearer ${GH.token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
+      ...(telo ? { "Content-Type": "application/json" } : {}) }, body: telo ? JSON.stringify(telo) : undefined });
+}
+
+// ── замок: данные заперты паролем пользователя, отпираются только здесь, в браузере ──
+const bin = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const MESTO = "do-klyuch:" + location.pathname;
+async function klyuchIzParolya(parol, sh) {
+  const baza = await crypto.subtle.importKey("raw", enc.encode(parol), "PBKDF2", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: bin(sh.salt), iterations: sh.iter }, baza, 256));
+}
+async function otperet(sh, syroy) {
+  const k = await crypto.subtle.importKey("raw", syroy, "AES-GCM", false, ["decrypt"]);
+  const otkr = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bin(sh.iv) }, k, bin(sh.ct));
+  const tekst = await new Response(new Blob([otkr]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+  return JSON.parse(tekst);
+}
+function zapomnitKlyuch(syroy, dney) {
+  try { localStorage.setItem(MESTO, JSON.stringify({ k: btoa(String.fromCharCode(...syroy)), do: Date.now() + dney * 864e5 })); } catch (e) {}
+}
+function zapomnennyy() {
+  try { const z = JSON.parse(localStorage.getItem(MESTO) || "null"); if (z && z.do > Date.now()) return bin(z.k); } catch (e) {}
+  return null;
+}
+function zabytKlyuch() { try { localStorage.removeItem(MESTO); } catch (e) {} }
+function zapusti(p) { D = p.data; GH = p.gh || null; karkas(); razdel(); window.addEventListener("hashchange", razdel); }
+function ekranZamka(sh, oshibka) {
+  document.body.classList.add("zamok");
+  $("#ekran").innerHTML = `<form class="vhod-k" id="vhod-f"><div class="mark">${ik("sparkles")}</div><h1>Dashboard <span>Ozon</span></h1>
+    <p>Цифры заперты вашим паролем — тем, что лежит в сейфе GitHub под именем PAROL.</p>
+    <input type="password" id="vhod-p" placeholder="Пароль" autocomplete="current-password" autofocus required>
+    <label class="zap"><input type="checkbox" id="vhod-z" checked> Запомнить на этом устройстве на 30 дней</label>
+    ${oshibka ? `<div class="osh">${esc(oshibka)}</div>` : ""}<button class="knopka">Открыть</button></form>`;
+  $("#vhod-f").onsubmit = async e => {
+    e.preventDefault(); const b = e.target.querySelector("button"); b.disabled = true; b.textContent = "Открываю…";
+    try { const syroy = await klyuchIzParolya($("#vhod-p").value, sh); const p = await otperet(sh, syroy);
+      if ($("#vhod-z").checked) zapomnitKlyuch(syroy, 30);
+      document.body.classList.remove("zamok"); zapusti(p);
+    } catch (x) { ekranZamka(sh, "Пароль не подходит. Нужен тот, что в сейфе GitHub под именем PAROL."); }
+  };
 }
 
 // ── старт ─────────────────────────────────────────────────────────────────────
-fetch("/data.json", { cache: "no-store" }).then(r => { if (r.status === 401) { location.href = "/vhod"; throw 0; } return r.json(); })
-  .then(d => { D = d; karkas(); razdel(); window.addEventListener("hashchange", razdel); })
-  .catch(e => { if (e) $("#ekran").innerHTML = `<div class="card"><div class="pusto-blok">Данных пока нет — первый сбор ещё идёт или не настроены ключи Ozon (шаг 4 инструкции).</div></div>`; });
+document.querySelectorAll("[data-ik]").forEach(e => e.innerHTML = ik(e.dataset.ik));
+(async () => {
+  let r;
+  try { r = await fetch("data.enc", { cache: "no-store" }); } catch (e) { r = null; }
+  if (!r || !r.ok) {
+    document.body.classList.add("zamok");
+    $("#ekran").innerHTML = `<div class="vhod-k"><div class="mark">${ik("sparkles")}</div><h1>Dashboard <span>Ozon</span></h1>
+      <p>Данных пока нет: робот ещё ни разу их не присылал. Запустите сбор на GitHub (шаг 6 инструкции) и откройте страницу через 5–10 минут.</p></div>`;
+    return;
+  }
+  const sh = await r.json(), zap = zapomnennyy();
+  if (zap) { try { return zapusti(await otperet(sh, zap)); } catch (e) { zabytKlyuch(); } }
+  ekranZamka(sh);
+})();
 })();

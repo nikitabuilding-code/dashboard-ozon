@@ -13,12 +13,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import istochniki as I  # noqa: E402
 import ozon  # noqa: E402
 import raschet as R  # noqa: E402
+import shifr  # noqa: E402
 
 ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.4"
+VERSIYA = "2026.11.5"
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",
@@ -106,6 +107,31 @@ def main():
     os.replace(DATA + ".tmp", DATA)
     print(f"Готово: посчитано дней {len(dni)}, месяцев факта {len(fakt)}"
           + (f", ошибок {len(oshibki)}" if oshibki else ", без ошибок"), flush=True)
+    return otpravit_na_stranicu(data)
+
+
+def otpravit_na_stranicu(data):
+    """Запереть результат паролем и отправить шифр на сервер-«окно». Ошибка — красный крестик в GitHub."""
+    parol, propusk = os.environ.get("PAROL") or "", os.environ.get("DO_PROPUSK") or ""
+    if not propusk or not parol:
+        print("⚠ Страница не обновлена: в сейфе GitHub нет " + " и ".join(
+            x for x, v in (("PAROL", parol), ("DO_PROPUSK", propusk)) if not v) + " (шаг 5 инструкции).", flush=True)
+        return 1
+    prichina = shifr.slabyy(parol)
+    if prichina:
+        print(f"⚠ Страница не обновлена: пароль слишком простой — {prichina}. Задайте новый PAROL в сейфе GitHub "
+              "(от 12 знаков, буквы и цифры, не слово и не дата).", flush=True)
+        return 1
+    adres = propusk.split(":", 1)[0]
+    gh = {"repo": os.environ.get("GITHUB_REPOSITORY") or "", "token": os.environ.get("PROPUSK_GITHUB") or ""}
+    try:
+        shifr.otpravit(shifr.zaperet({"data": data, "gh": gh}, parol, adres), propusk)
+    except Exception as e:
+        print(f"⚠ Страница не обновлена: {e}", flush=True)
+        return 1
+    print("· страница обновлена: данные заперты вашим паролем и отправлены", flush=True)
+    if not gh["token"]:
+        print("⚠ Нет секрета PROPUSK_GITHUB — на странице не будут работать «Настройки» (шаг 3 и 5).", flush=True)
     return 0
 
 

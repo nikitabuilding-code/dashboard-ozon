@@ -32,6 +32,9 @@ jobs:
           OZON_API_KEY: ${{ secrets.OZON_API_KEY }}
           OZON_PERF_CLIENT_ID: ${{ secrets.OZON_PERF_CLIENT_ID }}
           OZON_PERF_SECRET: ${{ secrets.OZON_PERF_SECRET }}
+          PAROL: ${{ secrets.PAROL }}
+          DO_PROPUSK: ${{ secrets.DO_PROPUSK }}
+          PROPUSK_GITHUB: ${{ secrets.PROPUSK_GITHUB }}
         run: python3 sbor/glavnaya.py
       - name: Сохранить
         if: always()
