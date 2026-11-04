@@ -220,3 +220,15 @@ border:1px solid transparent;box-shadow:0 0 50px -12px rgba(79,140,255,.75),0 30
 .vhod-k .zabyl p{margin:10px 0 6px;color:#B9C4E6;font-size:12.5px}
 .vhod-k .zabyl ol{padding-left:18px}.vhod-k .zabyl li{margin-bottom:5px}
 .vhod-k .zabyl a{color:#9FC0FF}.vhod-k .zabyl b{color:#fff}
+
+.vhod-k .zabyl-k{all:unset;cursor:pointer;display:block;width:100%;margin-top:12px;padding:11px;border-radius:13px;text-align:center;font-weight:750;font-size:14px;color:#DCE6FF;
+background:rgba(255,255,255,.05);border:1px solid rgba(120,170,255,.35);box-sizing:border-box}
+.vhod-k .zabyl-k:hover{border-color:rgba(160,195,255,.8)}
+.zab-okno{max-width:480px;text-align:left}.zab-okno h1,.zab-okno>p{text-align:center}
+.zab-okno .zs{display:flex;gap:12px;margin:14px 0;padding:14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.zab-okno .zn{flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font:700 14px Unbounded;color:#fff;background:linear-gradient(145deg,#4F8CFF,#2BC48B)}
+.zab-okno .zs b{display:block;color:#fff;font-size:14px;margin-bottom:3px}.zab-okno .zs span{display:block;color:#B9C4E6;font-size:12.5px;line-height:1.5}
+.zab-okno .zs span b{display:inline;font-size:inherit}
+.zab-okno .zs .knopka{display:block;margin-top:10px;padding:11px;font-size:14px;text-decoration:none}
+.zab-okno .zs p{color:#B9C4E6;font-size:12.5px;margin:8px 0 0}.zab-okno a{color:#9FC0FF}
+.zab-okno a.knopka{color:#fff}

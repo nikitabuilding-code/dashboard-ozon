@@ -428,21 +428,31 @@ function zapomnennyy() {
 }
 function zabytKlyuch() { try { localStorage.removeItem(MESTO); } catch (e) {} }
 function zapusti(p) { D = p.data; GH = p.gh || null; karkas(); razdel(); window.addEventListener("hashchange", razdel); }
+function oknoZabyl(sh) {
+  const repo = sh.repo || "", gh = repo ? `https://github.com/${repo}` : "";
+  const sm = repo ? `<a class="knopka" href="${gh}/settings/secrets/actions/PAROL" target="_blank" rel="noopener">Открыть смену пароля на GitHub ↗</a>`
+    : `<p>Откройте <a href="https://github.com" target="_blank" rel="noopener">github.com</a> → круглая картинка справа вверху → Repositories → dashboard-ozon (Private) → Settings → Secrets and variables → Actions → у строки PAROL значок карандаша.</p>`;
+  const zp = repo ? `<a class="knopka" href="${gh}/actions/workflows/sbor.yml" target="_blank" rel="noopener">Открыть запуск робота ↗</a>`
+    : `<p>В той же копии: вкладка Actions → слева «Сбор данных».</p>`;
+  $("#ekran").innerHTML = `<div class="vhod-k zab-okno"><div class="mark">${ik("sparkles")}</div><h1>Новый пароль</h1>
+    <p>Старый пароль не узнать никому — на этом держится защита ваших цифр. Но его можно <b>заменить за 5 минут</b>, ничего не потеряв: история и настройки останутся.</p>
+    <div class="zs"><div class="zn">1</div><div><b>Придумайте новый пароль</b><span>От 12 знаков, буквы и цифры. Удобнее всего — пусть его придумает и сохранит менеджер паролей: на Mac приложение «Пароли», на Windows — менеджер паролей Chrome.</span></div></div>
+    <div class="zs"><div class="zn">2</div><div><b>Впишите его на GitHub</b><span>Откроется окно «PAROL»: в поле <b>Value</b> вставьте новый пароль и нажмите зелёную <b>Update secret</b>.</span>${sm}</div></div>
+    <div class="zs"><div class="zn">3</div><div><b>Запустите пересчёт</b><span>Зелёная <b>Run workflow</b> справа, затем ещё раз <b>Run workflow</b> в белой рамке. Через 3–5 минут у запуска будет зелёная галочка.</span>${zp}</div></div>
+    <div class="zs"><div class="zn">4</div><div><b>Вернитесь сюда</b><span>Обновите эту страницу и введите новый пароль.</span></div></div>
+    <button type="button" class="zabyl-k" id="nazad">← Назад ко входу</button></div>`;
+  $("#nazad").onclick = () => ekranZamka(sh);
+}
 function ekranZamka(sh, oshibka) {
   document.body.classList.add("zamok");
   $("#ekran").innerHTML = `<form class="vhod-k" id="vhod-f"><div class="mark">${ik("sparkles")}</div><h1>Dashboard <span>Ozon</span></h1>
     <p>Цифры заперты вашим паролем — тем, что лежит в сейфе GitHub под именем PAROL.</p>
-    <input type="password" id="vhod-p" placeholder="Пароль" autocomplete="current-password" autofocus required>
+    <input type="text" name="username" autocomplete="username" value="Dashboard Ozon ${esc(location.pathname.split("/").filter(Boolean).pop() || "")}" hidden readonly>
+    <input type="password" id="vhod-p" name="password" placeholder="Пароль" autocomplete="current-password" autofocus required>
     <label class="zap"><input type="checkbox" id="vhod-z" checked> Запомнить на этом устройстве на 30 дней</label>
-    ${oshibka ? `<div class="osh">${esc(oshibka)}</div>` : ""}<button class="knopka">Открыть</button>
-    <details class="zabyl"${oshibka ? " open" : ""}><summary>Забыли пароль?</summary>
-      <p>Старый пароль не узнать никому — так ваши цифры и защищены. Но его можно <b>заменить</b>, ничего не потеряв:</p>
-      <ol><li>Придумайте новый пароль (от 12 знаков, буквы и цифры) и запишите его.</li>
-      <li>Откройте свою копию на GitHub: <a href="https://github.com" target="_blank" rel="noopener">github.com</a> → круглая картинка справа вверху → <b>Repositories</b> → <b>dashboard-ozon</b> с надписью Private.</li>
-      <li>Вкладка <b>Settings</b> → слева <b>Secrets and variables</b> → <b>Actions</b> → у строки <b>PAROL</b> значок карандаша → впишите новый пароль → <b>Update secret</b>.</li>
-      <li>Вкладка <b>Actions</b> → слева <b>Сбор данных</b> → <b>Run workflow</b> → ещё раз <b>Run workflow</b>.</li>
-      <li>Через 3–5 минут, когда у запуска будет зелёная галочка, обновите эту страницу и введите новый пароль.</li></ol>
-    </details></form>`;
+    ${oshibka ? `<div class="osh">${esc(oshibka)} Не помните его — нажмите «Забыли пароль?» ниже.</div>` : ""}<button class="knopka">Открыть</button>
+    <button type="button" class="zabyl-k" id="zabyl">Забыли пароль?</button></form>`;
+  $("#zabyl").onclick = () => oknoZabyl(sh);
   $("#vhod-f").onsubmit = async e => {
     e.preventDefault(); const b = e.target.querySelector("button"); b.disabled = true; b.textContent = "Открываю…";
     try { const syroy = await klyuchIzParolya($("#vhod-p").value, sh); const p = await otperet(sh, syroy);

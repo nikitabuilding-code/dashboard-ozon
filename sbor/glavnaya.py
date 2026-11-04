@@ -19,7 +19,7 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.6"
+VERSIYA = "2026.11.7"
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",
@@ -125,7 +125,7 @@ def otpravit_na_stranicu(data):
     adres = propusk.split(":", 1)[0]
     gh = {"repo": os.environ.get("GITHUB_REPOSITORY") or "", "token": os.environ.get("PROPUSK_GITHUB") or ""}
     try:
-        shifr.otpravit(shifr.zaperet({"data": data, "gh": gh}, parol, adres), propusk)
+        shifr.otpravit(shifr.zaperet({"data": data, "gh": gh}, parol, adres, gh["repo"]), propusk)
     except Exception as e:
         print(f"⚠ Страница не обновлена: {e}", flush=True)
         return 1

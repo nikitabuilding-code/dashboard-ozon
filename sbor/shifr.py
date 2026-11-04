@@ -38,7 +38,7 @@ def slabyy(parol):
     return None
 
 
-def zaperet(dannye, parol, adres):
+def zaperet(dannye, parol, adres, repo=""):
     AESGCM = _aesgcm()
     sol = hashlib.sha256(("dashboard-ozon-sol:" + adres).encode()).digest()[:16]
     klyuch = hashlib.pbkdf2_hmac("sha256", parol.encode("utf-8"), sol, POVTOROV, 32)
@@ -46,7 +46,9 @@ def zaperet(dannye, parol, adres):
     otkrytoe = gzip.compress(json.dumps(dannye, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     ct = AESGCM(klyuch).encrypt(iv, otkrytoe, None)
     b64 = lambda b: base64.b64encode(b).decode()
-    return {"v": 1, "kdf": "pbkdf2-sha256", "iter": POVTOROV, "salt": b64(sol), "iv": b64(iv), "zip": "gzip", "ct": b64(ct)}
+    # repo — открыто, без цифр: нужно кнопке «Забыли пароль?», чтобы вести прямо в свою копию на GitHub
+    return {"v": 1, "kdf": "pbkdf2-sha256", "iter": POVTOROV, "salt": b64(sol), "iv": b64(iv), "zip": "gzip", "ct": b64(ct),
+            "repo": repo}
 
 
 def otpravit(shifr, propusk):
