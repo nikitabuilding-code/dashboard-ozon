@@ -9,8 +9,8 @@ permissions:
 jobs:
   obnovit:
     if: github.repository != 'nikitabuilding-code/dashboard-ozon'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Взять свежий код из шаблона
         run: bash sbor/obnovit.sh
