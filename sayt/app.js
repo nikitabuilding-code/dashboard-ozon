@@ -434,7 +434,15 @@ function ekranZamka(sh, oshibka) {
     <p>Цифры заперты вашим паролем — тем, что лежит в сейфе GitHub под именем PAROL.</p>
     <input type="password" id="vhod-p" placeholder="Пароль" autocomplete="current-password" autofocus required>
     <label class="zap"><input type="checkbox" id="vhod-z" checked> Запомнить на этом устройстве на 30 дней</label>
-    ${oshibka ? `<div class="osh">${esc(oshibka)}</div>` : ""}<button class="knopka">Открыть</button></form>`;
+    ${oshibka ? `<div class="osh">${esc(oshibka)}</div>` : ""}<button class="knopka">Открыть</button>
+    <details class="zabyl"${oshibka ? " open" : ""}><summary>Забыли пароль?</summary>
+      <p>Старый пароль не узнать никому — так ваши цифры и защищены. Но его можно <b>заменить</b>, ничего не потеряв:</p>
+      <ol><li>Придумайте новый пароль (от 12 знаков, буквы и цифры) и запишите его.</li>
+      <li>Откройте свою копию на GitHub: <a href="https://github.com" target="_blank" rel="noopener">github.com</a> → круглая картинка справа вверху → <b>Repositories</b> → <b>dashboard-ozon</b> с надписью Private.</li>
+      <li>Вкладка <b>Settings</b> → слева <b>Secrets and variables</b> → <b>Actions</b> → у строки <b>PAROL</b> значок карандаша → впишите новый пароль → <b>Update secret</b>.</li>
+      <li>Вкладка <b>Actions</b> → слева <b>Сбор данных</b> → <b>Run workflow</b> → ещё раз <b>Run workflow</b>.</li>
+      <li>Через 3–5 минут, когда у запуска будет зелёная галочка, обновите эту страницу и введите новый пароль.</li></ol>
+    </details></form>`;
   $("#vhod-f").onsubmit = async e => {
     e.preventDefault(); const b = e.target.querySelector("button"); b.disabled = true; b.textContent = "Открываю…";
     try { const syroy = await klyuchIzParolya($("#vhod-p").value, sh); const p = await otperet(sh, syroy);

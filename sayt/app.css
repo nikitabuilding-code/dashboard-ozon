@@ -213,3 +213,10 @@ border:1px solid transparent;box-shadow:0 0 50px -12px rgba(79,140,255,.75),0 30
 .vhod-k .knopka{display:block;width:100%;margin-top:16px;padding:14px;text-align:center;font-size:15px}
 .vhod-k .osh{margin-top:12px;color:#FF8A84;font-weight:700;font-size:13px}
 .vhod-k .knopka{box-sizing:border-box}
+
+.vhod-k .zabyl{margin-top:16px;text-align:left;font-size:12.5px;color:#B9C4E6;line-height:1.5}
+.vhod-k .zabyl summary{cursor:pointer;text-align:center;color:#9FC0FF;font-weight:700;list-style:none}
+.vhod-k .zabyl summary::-webkit-details-marker{display:none}
+.vhod-k .zabyl p{margin:10px 0 6px;color:#B9C4E6;font-size:12.5px}
+.vhod-k .zabyl ol{padding-left:18px}.vhod-k .zabyl li{margin-bottom:5px}
+.vhod-k .zabyl a{color:#9FC0FF}.vhod-k .zabyl b{color:#fff}
