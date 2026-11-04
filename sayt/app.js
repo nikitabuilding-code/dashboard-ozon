@@ -38,10 +38,9 @@ function karkas() {
   $("#foot").textContent = `Dashboard Ozon ${D.versiya || ""} · данные Ozon Seller API · заперто вашим паролем`;
   $("#vyhod").onclick = e => { e.preventDefault(); zabytKlyuch(); location.reload(); };
   // переключатель светлого и тёмного вида — запоминается на этом устройстве
-  const vidK = () => { const sv = document.documentElement.classList.contains("svetlo");
-    return `${ik(sv ? "moon" : "sun")}<span>${sv ? "Тёмный вид" : "Светлый вид"}</span>`; };
+  const vidK = () => ik(document.documentElement.classList.contains("svetlo") ? "moon" : "sun");
   document.querySelectorAll(".vid-k").forEach(b => b.remove());
-  $("#niz").insertAdjacentHTML("beforebegin", `<button type="button" class="vid-k" id="vid-k">${vidK()}</button>`);
+  $(".side .logo").insertAdjacentHTML("beforebegin", `<button type="button" class="vid-k vid-kv" id="vid-k" aria-label="Сменить вид" title="Светлый или тёмный вид">${vidK()}</button>`);
   $(".mob-top .chip").insertAdjacentHTML("beforebegin", `<button type="button" class="vid-k" id="vid-k-m" aria-label="Сменить вид">${ik(document.documentElement.classList.contains("svetlo") ? "moon" : "sun")}</button>`);
   const smenit = () => {
     const sv = document.documentElement.classList.toggle("svetlo");

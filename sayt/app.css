@@ -298,3 +298,4 @@ border:1px solid var(--do-line);background:rgba(255,255,255,.03);width:100%;box-
 .mob-top .chip{margin-left:8px}.mob-top{gap:0}.mob-top .logo{margin-right:auto}
 .mob-top .vid-k{flex:none;width:36px;height:36px;margin-left:8px}
 @media(max-width:440px){.mob-top .chip span{display:none}.mob-top .chip{padding:7px 8px}}
+.side .vid-kv{width:36px;height:36px;padding:0;justify-content:center;margin:0 0 12px 6px;border-radius:11px}
