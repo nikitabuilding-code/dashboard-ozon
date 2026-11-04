@@ -448,11 +448,19 @@ function ekranZamka(sh, oshibka) {
   $("#ekran").innerHTML = `<form class="vhod-k" id="vhod-f"><div class="mark">${ik("sparkles")}</div><h1>Dashboard <span>Ozon</span></h1>
     <p>Цифры заперты вашим паролем — тем, что лежит в сейфе GitHub под именем PAROL.</p>
     <input type="text" name="username" autocomplete="username" value="Dashboard Ozon ${esc(location.pathname.split("/").filter(Boolean).pop() || "")}" hidden readonly>
-    <input type="password" id="vhod-p" name="password" placeholder="Пароль" autocomplete="current-password" autofocus required>
+    <div class="pole-p"><input type="password" id="vhod-p" name="password" placeholder="Пароль" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus required>
+      <button type="button" class="glaz" id="glaz" aria-label="Показать пароль" title="Показать пароль">${ik("eye")}</button></div>
     <label class="zap"><input type="checkbox" id="vhod-z" checked> Запомнить на этом устройстве на 30 дней</label>
     ${oshibka ? `<div class="osh">${esc(oshibka)} Не помните его — нажмите «Забыли пароль?» ниже.</div>` : ""}<button class="knopka">Открыть</button>
     <button type="button" class="zabyl-k" id="zabyl">Забыли пароль?</button></form>`;
   $("#zabyl").onclick = () => oknoZabyl(sh);
+  $("#glaz").onclick = () => {
+    const p = $("#vhod-p"), vid = p.type === "password";
+    p.type = vid ? "text" : "password";
+    $("#glaz").innerHTML = ik(vid ? "eye-off" : "eye");
+    $("#glaz").setAttribute("aria-label", vid ? "Скрыть пароль" : "Показать пароль"); $("#glaz").title = vid ? "Скрыть пароль" : "Показать пароль";
+    p.focus();
+  };
   $("#vhod-f").onsubmit = async e => {
     e.preventDefault(); const b = e.target.querySelector("button"); b.disabled = true; b.textContent = "Открываю…";
     try { const syroy = await klyuchIzParolya($("#vhod-p").value, sh); const p = await otperet(sh, syroy);
