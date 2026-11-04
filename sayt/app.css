@@ -301,3 +301,7 @@ border:1px solid var(--do-line);background:rgba(255,255,255,.03);width:100%;box-
 .side{padding-top:44px}
 .side .vid-kv{position:absolute;top:12px;right:12px;width:30px;height:30px;padding:0;justify-content:center;margin:0;border-radius:9px}
 .side .vid-kv svg{width:15px;height:15px}
+#t-traf .tov .n{min-width:190px}
+#t-traf .tab th,#t-traf .tab td{padding-left:7px;padding-right:7px}
+#t-traf .tab th{white-space:normal;vertical-align:bottom}
+#t-traf .tab th small{max-width:96px;margin-left:auto}
