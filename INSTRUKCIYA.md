@@ -140,7 +140,14 @@ GitHub — бесплатный сервис, где хранятся прогр
    - кнопка **Install & Authorize** внизу была бледной — после выбора она станет ярко-зелёной;
    - нажмите её. Если GitHub попросит пароль или код подтверждения — введите.
 
-   Так Cloudflare увидит только эту папку, остальное — нет. Разрешение «Read and write access to … code, deployments» в окне — обычное для Cloudflare: ему нужно забирать файлы. Окно закроется само.
+   Так Cloudflare увидит только эту папку, остальное — нет. Разрешение «Read and write access to … code, deployments» в окне — обычное для Cloudflare: ему нужно забирать файлы. После нажатия **не переключайте вкладки**, пока окно не закроется само.
+
+   **Как понять, что связь есть:** на странице «Make something new» кнопка называется уже **Continue with GitHub**, и у значка горит **зелёная точка**. Нажмите её.
+
+   **Если окно показало «Error connecting to git account»** или после нажатия открывает главную страницу Cloudflare вместо списка папок — связь застряла на полпути. Так было на пробной установке, лечится так:
+   1. Откройте **https://github.com/settings/installations** → у «Cloudflare Workers and Pages» нажмите **Configure** → в самом низу, в красной рамке «Danger zone», — **Uninstall** (не Suspend) → подтвердите. Через минуту обновите страницу (Cmd+R на Mac, F5 на Windows) — список должен стать пустым.
+   2. Там же вкладка **Authorized GitHub Apps** → у «Cloudflare Workers and Pages» нажмите **Revoke** → подтвердите. Должно стать «No authorized GitHub Apps».
+   3. Вернитесь на вкладку Cloudflare со страницей «Make something new», обновите её и повторите **Connect GitHub** с начала этого шага.
 4. Вернётесь в Cloudflare: выберите `dashboard-ozon` → **Next**. Название проекта оставьте `dashboard-ozon`, остальные поля не трогайте → **Deploy**.
 5. Подождите 1–2 минуты. Cloudflare покажет адрес вида **https://dashboard-ozon.что-то.workers.dev** — это ваша ссылка. Сохраните её в закладки на компьютере и телефоне.
 
