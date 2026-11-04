@@ -19,7 +19,7 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.7"
+VERSIYA = "2026.11.8"
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",
@@ -81,10 +81,12 @@ def main():
     nach = shag("начисления", lambda: I.nachisleniya(zhurnal, karta, s), {})
     reklama = shag("реклама", lambda: I.reklama(zhurnal, karta, zakazy, s), I.chitat("reklama.json"))
     snimki = shag("комиссия", lambda: I.komissiya(zhurnal, tovary), I.chitat("komissiya.json"))
+    poisk = shag("поиск", lambda: I.poisk(zhurnal, tovary), I.chitat("poisk.json"))
+    rek_trafik = I.chitat("reklama_trafik.json")
 
     vchera = (segodnya - dt.timedelta(days=1)).isoformat()
     nachalo = max(s, (segodnya - dt.timedelta(days=POKAZYVAT_DNEY)).isoformat())
-    dni = R.dni(n, zakazy, nach, reklama, snimki, nachalo, vchera)
+    dni = R.dni(n, zakazy, nach, reklama, snimki, nachalo, vchera, poisk, rek_trafik)
     fakt = R.fakt_mesyacev(n, {d: z for d, z in nach.items() if d >= s})
     data = {
         "versiya": VERSIYA,

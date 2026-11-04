@@ -53,8 +53,10 @@ function svod(dni) {
   for (const d of dni) {
     for (const k of POLYA) s[k] += d[k] || 0;
     for (const [a, t] of Object.entries(d.tovary || {})) {
-      const z = s.tovary[a] || (s.tovary[a] = { zakazy: 0, prodazhi: 0, vyruchka: 0, reklama: 0, mp1: 0, mp2: 0, komissiya: 0, logistika: 0, nalog: 0, zakupka: 0 });
-      for (const k in z) z[k] += t[k] || 0;
+      const z = s.tovary[a] || (s.tovary[a] = { zakazy: 0, prodazhi: 0, vyruchka: 0, reklama: 0, mp1: 0, mp2: 0, komissiya: 0, logistika: 0, nalog: 0, zakupka: 0,
+        vidyat: 0, iskali: 0, pozVes: 0, konvVes: 0, poiskDney: 0, rek_pokazy: 0, rek_kliki: 0 });
+      for (const k of ["zakazy", "prodazhi", "vyruchka", "reklama", "mp1", "mp2", "komissiya", "logistika", "nalog", "zakupka", "rek_pokazy", "rek_kliki"]) z[k] += t[k] || 0;
+      if (t.poisk) { const v = t.poisk.vidyat || 0; z.vidyat += v; z.iskali += t.poisk.iskali || 0; z.pozVes += (t.poisk.poz || 0) * v; z.konvVes += (t.poisk.konv || 0) * v; z.gmv = (z.gmv || 0) + (t.poisk.gmv || 0); z.poiskDney++; }
     }
   }
   return s;
@@ -123,7 +125,9 @@ function obzor() {
         : `<div><div class="l">Прогноз на месяц</div><div class="n ${zn(uzhe)}">${rub(uzhe / dm.length * vMes)}</div><div class="mut">если темп сохранится</div></div>`}</div>
       <div class="bar"><i style="width:${Math.round(dm.length / vMes * 100)}%"></i></div><div class="mut">${dm.length} из ${vMes} дней месяца</div></section>
     <section class="card s12 g"><div class="hd"><div class="ico">${ik("chart-column")}</div><div><h2>Прибыль по дням</h2><div class="s">последние 30 дней · нажмите на столбик, чтобы открыть день</div></div></div><div class="chart" id="g-st"></div></section>
-    <section class="card s12"><div class="hd"><div class="ico">${ik("package")}</div><div><h2>Товары</h2><div class="s">${esc(V.podpis)} · линия — прибыль за 14 дней</div></div></div><div id="t-tov"></div></section>
+    <section class="card s12"><div class="hd"><div class="ico">${ik("package")}</div><div><h2>Товары</h2><div class="s">${esc(V.podpis)}</div></div></div><div id="t-tov"></div></section>
+    <section class="card s12 v"><div class="hd"><div class="ico">${ik("trending-up")}</div><div><h2>Трафик и конверсия</h2><div class="s">${esc(V.podpis)} · поиск Ozon и реклама</div></div></div><div id="t-traf"></div>
+      <p class="podskazka" style="margin:12px 0 0">Ozon отдаёт программам показы только из <b>поиска</b> (человек набрал запрос — товар появился в выдаче) и из <b>рекламы</b>. Показы в каталоге и рекомендациях без рекламы Ozon не отдаёт — их здесь нет. Позиция — средняя по всем запросам. Конверсия — как её считает Ozon в разделе «Поисковые запросы».</p></section>
   </div>`;
   document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { ST.period = b.dataset.p; ST.den = null; obzor(); });
   const vd = $("#vybor-daty");
@@ -211,15 +215,33 @@ function tablicaTovarov(S, V) {
   const spark = a => D.dni.slice(Math.max(0, iDo - 13), iDo + 1).map(d => (d.tovary[a] || {}).mp2 || 0).join(",");
   const T = a => D.tovary[a] || { nazvanie: a, foto: "" };
   const foto = a => `<div class="foto" style="background-image:url('${esc(T(a).foto)}')"></div>`;
-  $("#t-tov").innerHTML = `<div class="skroll"><table class="tab shirokaya"><thead><tr><th>Товар</th><th>Заказы</th><th>Цена</th><th>Выручка</th><th>Реклама</th><th>ДРР</th><th>Со штуки</th><th>Прибыль</th><th>14 дней</th></tr></thead><tbody>
+  $("#t-tov").innerHTML = `<div class="skroll"><table class="tab shirokaya"><thead><tr><th>Товар</th><th>Заказы</th><th>Цена</th><th>Выручка</th><th>Реклама</th><th>ДРР</th><th>Со штуки<small>до рекламы</small></th><th>МП1<small>прибыль до рекламы</small></th><th>МП2<small>прибыль после рекламы</small></th></tr></thead><tbody>
     ${vse.map(([a, t]) => `<tr><td><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div><div class="m">${esc(a)}</div></div></div></td>
       <td>${sht(t.zakazy)}</td><td>${t.zakazy ? rub(t.vyruchka / t.prodazhi) : "—"}</td><td>${rub(t.vyruchka)}</td><td>${rub(t.reklama)}</td><td>${pct(t.reklama / t.vyruchka, 1)}</td>
-      <td class="${zn(t.mp1)}">${t.prodazhi ? rub(t.mp1 / t.prodazhi) : "—"}</td><td class="${zn(t.mp2)}"><b>${rub(t.mp2)}</b></td><td><svg class="spark" data-v="${spark(a)}"></svg></td></tr>`).join("")}
+      <td class="${zn(t.mp1)}">${t.prodazhi ? rub(t.mp1 / t.prodazhi) : "—"}</td><td class="${zn(t.mp1)}"><b>${rub(t.mp1)}</b></td><td class="${zn(t.mp2)}"><b>${rub(t.mp2)}</b></td></tr>`).join("")}
     </tbody></table></div>
     <div class="tov-mob">${vse.map(([a, t]) => `<div class="tm"><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div><div class="m">${sht(t.zakazy)} заказов · ${t.zakazy ? rub(t.vyruchka / t.prodazhi) : "—"} · ДРР ${pct(t.reklama / t.vyruchka, 0)}</div></div></div>
-      <div class="r"><b class="${zn(t.mp2)}">${rub(t.mp2)}</b><div class="m">${t.prodazhi ? rub(t.mp1 / t.prodazhi) : "—"} со штуки</div></div></div>`).join("")}</div>`;
+      <div class="r"><div class="m">МП1 · до рекламы</div><b class="${zn(t.mp1)}">${rub(t.mp1)}</b><div class="m">МП2 · после рекламы</div><b class="${zn(t.mp2)}">${rub(t.mp2)}</b></div></div>`).join("")}</div>`;
+  trafik(vse, T, foto);
 }
 
+function trafik(vse, T, foto) {
+  const box = $("#t-traf"); if (!box) return;
+  const n = v => v ? sht(v) : "—";
+  const est = vse.some(([, t]) => t.poiskDney || t.rek_pokazy);
+  if (!est) { box.innerHTML = `<div class="pusto-blok">Данных о трафике за этот период пока нет — робот начал собирать их с версии 2026.11.8.</div>`; return; }
+  box.innerHTML = `<div class="skroll"><table class="tab shirokaya"><thead><tr><th>Товар</th><th>Увидели в поиске</th><th>Позиция<small>средняя</small></th><th>Конверсия<small>поиска</small></th><th>Продажи<small>из поиска</small></th><th>Показы<small>рекламы</small></th><th>Клики<small>рекламы</small></th><th>CTR<small>рекламы</small></th></tr></thead><tbody>
+    ${vse.map(([a, t]) => { const poz = t.vidyat ? t.pozVes / t.vidyat : null, konv = t.vidyat ? t.konvVes / t.vidyat : null;
+      return `<tr><td><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div><div class="m">${esc(a)}</div></div></div></td>
+      <td>${n(t.vidyat)}</td><td>${poz ? poz.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) : "—"}</td><td>${konv != null ? konv.toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + "\u00A0%" : "—"}</td>
+      <td>${t.gmv ? rub(t.gmv) : "—"}</td><td>${n(t.rek_pokazy)}</td><td>${n(t.rek_kliki)}</td><td>${t.rek_pokazy ? pct(t.rek_kliki / t.rek_pokazy, 2) : "—"}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    ${vse.some(([, t]) => t.poiskDney) ? "" : `<div class="vnim" style="margin:12px 0 0"><div class="ico">${ik("calendar")}</div><div><b>Поиск за этот день Ozon ещё не выложил</b><span>Обычно он появляется через сутки. Откройте предыдущий день стрелкой «‹» или выберите 7 дней.</span></div></div>`}
+    <div class="tov-mob">${vse.map(([a, t]) => { const poz = t.vidyat ? t.pozVes / t.vidyat : null, konv = t.vidyat ? t.konvVes / t.vidyat : null;
+      return `<div class="tm"><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div>
+      <div class="m">Поиск: увидели ${n(t.vidyat)} · позиция ${poz ? Math.round(poz) : "—"} · конверсия ${konv != null ? konv.toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + "\u00A0%" : "—"}</div>
+      <div class="m">Реклама: показы ${n(t.rek_pokazy)} · клики ${n(t.rek_kliki)} · CTR ${t.rek_pokazy ? pct(t.rek_kliki / t.rek_pokazy, 2) : "—"}</div></div></div></div>`; }).join("")}</div>`;
+}
 function sparki() {
   document.querySelectorAll("svg.spark").forEach(s => {
     const q = s.dataset.v.split(",").map(Number); if (q.length < 2) return;

@@ -241,6 +241,7 @@ def reklama(zhurnal, karta, zakazy_po_dnyam, s, dney=14):
     konec = segodnya() - dt.timedelta(days=1)
     nach = max(dt.date.fromisoformat(s), konec - dt.timedelta(days=dney)) if vse else dt.date.fromisoformat(s)
     novoe = defaultdict(lambda: defaultdict(float))
+    trafik = defaultdict(lambda: defaultdict(lambda: {"p": 0.0, "k": 0.0}))     # показы и клики рекламы
     ids = [str(k["id"]) for k in kampanii]
     d = nach
     while d <= konec and ids:
@@ -250,8 +251,9 @@ def reklama(zhurnal, karta, zakazy_po_dnyam, s, dney=14):
                           [("campaignIds", x) for x in ids[i:i + 50]] +
                           [("dateFrom", d.isoformat()), ("dateTo", po.isoformat())])
             for r in o.get("rows") or []:
-                rashod = float(str(r.get("moneySpent") or "0").replace(",", ".").replace(" ", "").replace(" ", ""))
-                if rashod <= 0:
+                chislo = lambda v: float(str(v or "0").replace(",", ".").replace("\u00a0", "").replace(" ", "") or 0)
+                rashod, pokazy, kliki = chislo(r.get("moneySpent")), chislo(r.get("views")), chislo(r.get("clicks"))
+                if rashod <= 0 and pokazy <= 0:
                     continue
                 kom = tov_kamp.get(str(r["id"])) or []
                 den = r["date"][:10]
@@ -260,14 +262,63 @@ def reklama(zhurnal, karta, zakazy_po_dnyam, s, dney=14):
                 ves = {a: (zak.get(a) or {}).get("vsego", 0) for a in komu}
                 vsego = sum(ves.values())
                 for a in komu:
-                    novoe[den][a] += rashod * (ves[a] / vsego if vsego else 1 / len(komu))
+                    dolya = ves[a] / vsego if vsego else 1 / len(komu)
+                    novoe[den][a] += rashod * dolya
+                    trafik[den][a]["p"] += pokazy * dolya
+                    trafik[den][a]["k"] += kliki * dolya
                 if not komu:
                     novoe[den]["_bez_tovara"] += rashod
         d = po + dt.timedelta(days=1)
     for den, o in novoe.items():
         vse[den] = {a: round(v, 2) for a, v in o.items()}
     pisat("reklama.json", vse)
+    tr = chitat("reklama_trafik.json")
+    for den, o in trafik.items():
+        tr[den] = {a: {"p": round(v["p"]), "k": round(v["k"])} for a, v in o.items()}
+    pisat("reklama_trafik.json", tr)
     zhurnal.append(f"реклама: кампаний {len(kampanii)}, перечитано с {nach.isoformat()}")
+    return vse
+
+
+# ── Поиск: кто увидел товар в выдаче, позиция, конверсия ───────────────────────
+
+def poisk(zhurnal, tovary_, dney=14, dopisyvat=3):
+    """По каждому артикулу и дню — данные Ozon по поисковой выдаче (/v1/analytics/product-queries):
+    сколько людей искали запросы, где был товар (iskali), сколько увидели товар (vidyat), средняя позиция,
+    конверсия Ozon, продажи из поиска. Общих показов карточки (каталог, рекомендации) Ozon программам
+    больше не отдаёт — только поиск. Первый раз — за dney дней, дальше перечитываются последние dopisyvat."""
+    vse = chitat("poisk.json")
+    skus = sorted({str(sk) for t in tovary_.values() for sk in t.get("sku") or []})
+    karta = {str(sk): a for a, t in tovary_.items() for sk in t.get("sku") or []}
+    vchera = segodnya() - dt.timedelta(days=1)
+    novyh = 0
+    for i in range(dney):
+        den = (vchera - dt.timedelta(days=i)).isoformat()
+        if den in vse and i >= dopisyvat:
+            continue
+        den_d, netu = {}, False
+        for j in range(0, len(skus), 50):
+            try:
+                o = ozon.seller("/v1/analytics/product-queries", {"date_from": den + "T00:00:00Z", "date_to": den + "T23:59:59Z",
+                                                                  "skus": skus[j:j + 50], "page": 0, "page_size": 100})
+            except ozon.OshibkaOzon as e:
+                if "no data for the specified period" in str(e):     # день ещё не готов или старше, чем Ozon хранит
+                    netu = True
+                    break
+                raise
+            for x in o.get("items") or []:
+                a = karta.get(str(x.get("sku")))
+                if a:
+                    den_d[a] = {"iskali": int(float(x.get("unique_search_users") or 0)),
+                                "vidyat": int(float(x.get("unique_view_users") or 0)),
+                                "poz": float(x.get("position") or 0), "konv": float(x.get("view_conversion") or 0),
+                                "gmv": round(float(x.get("gmv") or 0), 2)}
+        if netu:
+            continue
+        vse[den] = den_d
+        novyh += 1
+    pisat("poisk.json", vse)
+    zhurnal.append(f"поиск: перечитано дней {novyh}")
     return vse
 
 

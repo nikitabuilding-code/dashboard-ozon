@@ -129,7 +129,7 @@ def obshchie_rovno(nach):
 
 # ── День за днём ──────────────────────────────────────────────────────────────
 
-def dni(nastroyki, zakazy, nach, reklama, snimki, s, po):
+def dni(nastroyki, zakazy, nach, reklama, snimki, s, po, poisk=None, rek_trafik=None):
     """Прибыль каждого отработавшего дня [s, po] по товарам и итогом."""
     tov_nast = nastroyki.get("tovary") or {}
     obsh = obshchie_rovno(nach)
@@ -139,6 +139,8 @@ def dni(nastroyki, zakazy, nach, reklama, snimki, s, po):
         den = d.isoformat()
         zak = zakazy.get(den) or {}
         rek = reklama.get(den) or {}
+        pk = (poisk or {}).get(den) or {}
+        rt = (rek_trafik or {}).get(den) or {}
         z_nal = po_date(nastroyki.get("nalog"), den)
         itog = defaultdict(float)
         po_tov = {}
@@ -169,6 +171,10 @@ def dni(nastroyki, zakazy, nach, reklama, snimki, s, po):
                           + ([] if nst.get("zakupka") not in (None, "") else ["zakupka"]),
                  "komissiya_pct": round(st["komissiya"], 4) if st["komissiya"] is not None else None,
                  "istochnik_komissii": st["istochnik_komissii"]}
+            if offer in pk:
+                r["poisk"] = pk[offer]
+            if offer in rt:
+                r["rek_pokazy"], r["rek_kliki"] = rt[offer]["p"], rt[offer]["k"]
             po_tov[offer] = r
             for k in ("zakazy", "prodazhi", "vyruchka", "komissiya", "logistika", "nalog", "zakupka", "reklama", "mp1"):
                 itog[k] += r[k]
