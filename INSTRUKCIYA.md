@@ -134,7 +134,12 @@ GitHub — бесплатный сервис, где хранятся прогр
 
 1. В меню слева, в разделе **Build**, нажмите **Compute** — он раскроется — и выберите **Workers & Pages**. Откроется страница «Workers & Pages». Справа вверху нажмите синюю кнопку **Create application**.
 2. Откроется страница «Make something new» с несколькими вариантами. Нажмите первый — **Connect GitHub** (со значком кошки GitHub). Остальные варианты (Hello World, template, upload) не нужны.
-3. Откроется окно GitHub: «куда пустить Cloudflare». Выберите **Only select repositories** → в списке выберите `dashboard-ozon` → **Install & Authorize**. Не выбирайте «All repositories»: так Cloudflare увидит только эту папку, остальное — нет.
+3. Поверх Cloudflare откроется отдельное небольшое окно GitHub «Install & Authorize Cloudflare Workers and Pages» — GitHub спрашивает, к каким папкам пустить Cloudflare. **По умолчанию там отмечено «All repositories» — так не оставляйте.**
+   - отметьте второй кружок **Only select repositories**;
+   - под ним появится **Select repositories** — нажмите и выберите в списке `dashboard-ozon`;
+   - нажмите зелёную **Install & Authorize**. Если GitHub попросит пароль или код подтверждения — введите.
+
+   Так Cloudflare увидит только эту папку, остальное — нет. Разрешение «Read and write access to … code, deployments» в окне — обычное для Cloudflare: ему нужно забирать файлы. Окно закроется само.
 4. Вернётесь в Cloudflare: выберите `dashboard-ozon` → **Next**. Название проекта оставьте `dashboard-ozon`, остальные поля не трогайте → **Deploy**.
 5. Подождите 1–2 минуты. Cloudflare покажет адрес вида **https://dashboard-ozon.что-то.workers.dev** — это ваша ссылка. Сохраните её в закладки на компьютере и телефоне.
 
