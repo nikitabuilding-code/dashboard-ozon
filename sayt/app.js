@@ -229,7 +229,7 @@ function trafik(vse, T, foto) {
   const box = $("#t-traf"); if (!box) return;
   const n = v => v ? sht(v) : "—";
   const est = vse.some(([, t]) => t.poiskDney || t.rek_pokazy);
-  if (!est) { box.innerHTML = `<div class="pusto-blok">Данных о трафике за этот период пока нет — робот начал собирать их с версии 2026.11.8.</div>`; return; }
+  if (!est) { box.innerHTML = `<div class="pusto-blok">Данных о трафике за этот период пока нет. Они появятся после ближайшего сбора — сам утром или сразу по кнопке «Пересчитать сейчас» в «Настройках» (3–5 минут).</div>`; return; }
   box.innerHTML = `<div class="skroll"><table class="tab shirokaya"><thead><tr><th>Товар</th><th>Увидели в поиске</th><th>Позиция<small>средняя</small></th><th>Конверсия<small>поиска</small></th><th>Продажи<small>из поиска</small></th><th>Показы<small>рекламы</small></th><th>Клики<small>рекламы</small></th><th>CTR<small>рекламы</small></th></tr></thead><tbody>
     ${vse.map(([a, t]) => { const poz = t.vidyat ? t.pozVes / t.vidyat : null, konv = t.vidyat ? t.konvVes / t.vidyat : null;
       return `<tr><td><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div><div class="m">${esc(a)}</div></div></div></td>
