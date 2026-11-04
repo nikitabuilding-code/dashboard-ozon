@@ -19,7 +19,7 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.5"
+VERSIYA = "2026.11.6"
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",
@@ -130,6 +130,7 @@ def otpravit_na_stranicu(data):
         print(f"⚠ Страница не обновлена: {e}", flush=True)
         return 1
     print("· страница обновлена: данные заперты вашим паролем и отправлены", flush=True)
+    print(f"· адрес вашего Dashboard: {shifr.SERVER.rstrip('/')}/{adres}/", flush=True)
     if not gh["token"]:
         print("⚠ Нет секрета PROPUSK_GITHUB — на странице не будут работать «Настройки» (шаг 3 и 5).", flush=True)
     return 0
