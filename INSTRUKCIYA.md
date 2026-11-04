@@ -133,8 +133,8 @@ GitHub — бесплатный сервис, где хранятся прогр
 ### 5.2. Создать страницу
 
 1. В меню слева, в разделе **Build**, нажмите **Compute** — он раскроется — и выберите **Workers & Pages**. Откроется страница «Workers & Pages». Справа вверху нажмите синюю кнопку **Create application**.
-2. Выберите **Import a repository** → **Connect GitHub**.
-3. Откроется окно GitHub: «куда пустить Cloudflare». Выберите **Only select repositories** → в списке выберите `dashboard-ozon` → **Install & Authorize**. Так Cloudflare увидит только эту папку, остальное — нет.
+2. Откроется страница «Make something new» с несколькими вариантами. Нажмите первый — **Connect GitHub** (со значком кошки GitHub). Остальные варианты (Hello World, template, upload) не нужны.
+3. Откроется окно GitHub: «куда пустить Cloudflare». Выберите **Only select repositories** → в списке выберите `dashboard-ozon` → **Install & Authorize**. Не выбирайте «All repositories»: так Cloudflare увидит только эту папку, остальное — нет.
 4. Вернётесь в Cloudflare: выберите `dashboard-ozon` → **Next**. Название проекта оставьте `dashboard-ozon`, остальные поля не трогайте → **Deploy**.
 5. Подождите 1–2 минуты. Cloudflare покажет адрес вида **https://dashboard-ozon.что-то.workers.dev** — это ваша ссылка. Сохраните её в закладки на компьютере и телефоне.
 
