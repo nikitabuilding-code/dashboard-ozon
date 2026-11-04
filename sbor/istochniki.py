@@ -194,6 +194,8 @@ def nachisleniya(zhurnal, karta, s, dopisyvat_dney=10, maks_novyh=120):
             po_mes[m] = chitat(f"nachisleniya/{m}.json")
         den = d.isoformat()
         if (den not in po_mes[m] or d >= svezhie) and novyh < maks_novyh:
+            if novyh and novyh % 15 == 0:
+                print(f"  начисления: скачано {novyh} дней, сейчас {den}…", flush=True)
             vse, last = [], None
             while True:
                 telo = {"date": den}

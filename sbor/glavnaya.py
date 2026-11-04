@@ -18,7 +18,7 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.1"
+VERSIYA = "2026.11.2"
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",
@@ -38,8 +38,16 @@ def nastroyki():
     return {**NASTROYKI_PO_UMOLCHANIYU, **n}
 
 
+class Zhurnal(list):
+    """Журнал, который сразу печатает каждую запись: в GitHub видно, как идёт сбор, а не только в конце."""
+    def append(self, z):
+        print("·", z, flush=True)
+        super().append(z)
+
+
 def main():
-    zhurnal, oshibki = [], []
+    zhurnal, oshibki = Zhurnal(), []
+    print("Начинаю сбор. Первый раз — история за 3 месяца, это 5–15 минут.", flush=True)
     if not ozon.est_klyuchi():
         print("Нет ключей Ozon: задайте OZON_CLIENT_ID и OZON_API_KEY в секретах репозитория.")
         return 1
@@ -62,6 +70,7 @@ def main():
             return f()
         except Exception as e:                      # источник упал — остальное всё равно считаем
             oshibki.append(f"{imya}: {e}")
+            print(f"⚠ {imya}: {e}", flush=True)
             traceback.print_exc()
             return pusto
 
@@ -95,10 +104,8 @@ def main():
     with open(DATA + ".tmp", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(DATA + ".tmp", DATA)
-    for z in zhurnal:
-        print("·", z)
-    for o in oshibki:
-        print("⚠", o)
+    print(f"Готово: посчитано дней {len(dni)}, месяцев факта {len(fakt)}"
+          + (f", ошибок {len(oshibki)}" if oshibki else ", без ошибок"), flush=True)
     return 0
 
 
