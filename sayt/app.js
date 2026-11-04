@@ -66,8 +66,9 @@ function svod(dni) {
     for (const k of POLYA) s[k] += d[k] || 0;
     for (const [a, t] of Object.entries(d.tovary || {})) {
       const z = s.tovary[a] || (s.tovary[a] = { zakazy: 0, prodazhi: 0, vyruchka: 0, reklama: 0, mp1: 0, mp2: 0, komissiya: 0, logistika: 0, nalog: 0, zakupka: 0,
-        vidyat: 0, iskali: 0, pozVes: 0, konvVes: 0, poiskDney: 0, rek_pokazy: 0, rek_kliki: 0 });
+        vidyat: 0, iskali: 0, pozVes: 0, konvVes: 0, poiskDney: 0, rek_pokazy: 0, rek_kliki: 0, rek_obshchaya: 0 });
       for (const k of ["zakazy", "prodazhi", "vyruchka", "reklama", "mp1", "mp2", "komissiya", "logistika", "nalog", "zakupka", "rek_pokazy", "rek_kliki"]) z[k] += t[k] || 0;
+      if (t.rek_obshchaya) z.rek_obshchaya = 1;
       if (t.poisk) { const v = t.poisk.vidyat || 0; z.vidyat += v; z.iskali += t.poisk.iskali || 0; z.pozVes += (t.poisk.poz || 0) * v; z.konvVes += (t.poisk.konv || 0) * v; z.gmv = (z.gmv || 0) + (t.poisk.gmv || 0); z.poiskDney++; }
     }
   }
@@ -139,7 +140,7 @@ function obzor() {
     <section class="card s12 g"><div class="hd"><div class="ico">${ik("chart-column")}</div><div><h2>Прибыль по дням</h2><div class="s">последние 30 дней · нажмите на столбик, чтобы открыть день</div></div></div><div class="chart" id="g-st"></div></section>
     <section class="card s12"><div class="hd"><div class="ico">${ik("package")}</div><div><h2>Товары</h2><div class="s">${esc(V.podpis)}</div></div></div><div id="t-tov"></div></section>
     <section class="card s12 v"><div class="hd"><div class="ico">${ik("trending-up")}</div><div><h2>Трафик и конверсия</h2><div class="s">${esc(V.podpis)} · поиск Ozon и реклама</div></div></div><div id="t-traf"></div>
-      <p class="podskazka" style="margin:12px 0 0">Ozon отдаёт программам показы только из <b>поиска</b> (человек набрал запрос — товар появился в выдаче) и из <b>рекламы</b>. Показы в каталоге и рекомендациях без рекламы Ozon не отдаёт — их здесь нет. «Уникальные просмотры» — сколько разных покупателей увидели товар в поисковой выдаче (в кабинете Ozon: «Аналитика → Видимость в поиске → Сколько покупателей увидело»). CR1 — конверсия из поиска в карточку (данные Ozon). «Переходы» — расчёт: уникальные просмотры × CR1. CR2 — все заказы товара ÷ (переходы из поиска + клики по рекламе). Переходы из каталога и рекомендаций Ozon не отдаёт, поэтому CR2 немного завышен; если заказов больше известных переходов — «н/д». Позиция — средняя по всем запросам. Реклама считает показы с повторами, а поиск — людей, поэтому их нельзя сравнивать напрямую.</p></section>
+      <p class="podskazka" style="margin:12px 0 0">Здесь только то, что Ozon отдаёт программам цифрами. <b>Поиск:</b> «Уникальные просмотры» — сколько разных покупателей увидели товар в выдаче, CTR — какая доля из них открыла карточку, «Заказано из поиска» — сумма заказов, пришедших из поиска (в кабинете: «Аналитика → Видимость в поиске»). «Переходы» — уникальные просмотры × CTR. <b>Реклама:</b> показы, клики и CTR из рекламного кабинета. Корзины, CR1 и CR2 Ozon программам больше не отдаёт — они видны только в кабинете, «Аналитика → Воронка продаж». Показы в каталоге и рекомендациях без рекламы Ozon тоже не отдаёт. «Заказы» — все заказы товара из любых источников. Реклама считает показы с повторами, а поиск — людей, поэтому их нельзя сравнивать напрямую.</p></section>
   </div>`;
   document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { ST.period = b.dataset.p; ST.den = null; obzor(); });
   const vd = $("#vybor-daty");
@@ -237,31 +238,35 @@ function tablicaTovarov(S, V) {
   trafik(vse, T, foto);
 }
 
-// CR2: заказы ÷ все переходы в карточку, которые известны (из поиска + клики рекламы). Из каталога и рекомендаций
-// переходы Ozon не отдаёт — если заказов больше, чем известных переходов, честно пишем «н/д».
-function cr2(t) {
-  const per = (t.vidyat && t.konvVes ? Math.round(t.konvVes / 100) : 0) + (t.rek_kliki || 0);
-  if (!per || !t.zakazy) return "—";
-  const v = t.zakazy / per;
-  return v > 1 ? `<span title="Заказов больше, чем известных переходов: часть покупателей пришла из каталога или рекомендаций — эти переходы Ozon не отдаёт">н/д</span>` : pct(v, 1);
-}
+// Только то, что Ozon отдаёт цифрами, и точная арифметика из них. Корзин и конверсий в корзину/заказ Ozon программам
+// не отдаёт — их здесь нет, догадками не заменяем.
 function trafik(vse, T, foto) {
   const box = $("#t-traf"); if (!box) return;
   const n = v => v ? sht(v) : "—";
-  const est = vse.some(([, t]) => t.poiskDney || t.rek_pokazy);
+  const est = vse.some(([, t]) => t.poiskDney || t.rek_pokazy || t.rek_obshchaya);
   if (!est) { box.innerHTML = `<div class="pusto-blok">Данных о трафике за этот период пока нет. Они появятся после ближайшего сбора — сам утром или сразу по кнопке «Пересчитать сейчас» в «Настройках» (3–5 минут).</div>`; return; }
-  box.innerHTML = `<div class="skroll"><table class="tab shirokaya"><thead><tr><th>Товар</th><th>Уникальные<small>просмотры в поиске</small></th><th>Позиция<small>средняя в поиске</small></th><th>CR1<small>из поиска в карточку</small></th><th>Переходы<small>из поиска</small></th><th>Заказы<small>все за период</small></th><th>CR2<small>заказы ÷ (переходы + клики)</small></th><th>Показы<small>рекламы</small></th><th>Клики<small>рекламы</small></th><th>CTR<small>рекламы</small></th></tr></thead><tbody>
-    ${vse.map(([a, t]) => { const poz = t.vidyat ? t.pozVes / t.vidyat : null, konv = t.vidyat ? t.konvVes / t.vidyat : null;
+  const OB = `<span title="Товар в рекламной кампании вместе с другими товарами. Ozon отдаёт показы и клики на всю кампанию, без разбивки по товарам, — делить на глаз не стали">общая</span>`;
+  const r = t => {
+    const poz = t.vidyat ? t.pozVes / t.vidyat : null, ctr = t.vidyat ? t.konvVes / t.vidyat : null, ob = t.rek_obshchaya && !t.rek_pokazy;
+    return { poz: poz ? poz.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) : "—",
+      ctr: ctr != null ? ctr.toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + "\u00A0%" : "—",
+      per: ctr != null ? n(Math.round(t.konvVes / 100)) : "—",
+      gmv: t.gmv ? rub(t.gmv) : "—",
+      rp: ob ? OB : n(t.rek_pokazy), rk: ob ? OB : n(t.rek_kliki),
+      rctr: ob ? OB : (t.rek_pokazy ? pct(t.rek_kliki / t.rek_pokazy, 2) : "—") };
+  };
+  box.innerHTML = `<div class="skroll"><table class="tab shirokaya"><thead><tr><th>Товар</th><th>Уникальные просмотры<small>в поиске</small></th><th>Позиция<small>средняя в поиске</small></th><th>CTR<small>из выдачи в карточку</small></th><th>Переходы<small>из поиска в карточку</small></th><th>Заказано из поиска<small>на сумму</small></th><th>Заказы<small>все источники, шт</small></th><th>Показы<small>рекламы</small></th><th>Клики<small>рекламы</small></th><th>CTR<small>рекламы</small></th></tr></thead><tbody>
+    ${vse.map(([a, t]) => { const x = r(t);
       return `<tr><td><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div><div class="m">${esc(a)}</div></div></div></td>
-      <td>${n(t.vidyat)}</td><td>${poz ? poz.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) : "—"}</td><td>${konv != null ? konv.toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + "\u00A0%" : "—"}</td><td>${konv != null ? n(Math.round(t.vidyat * konv / 100)) : "—"}</td><td>${n(t.zakazy)}</td><td>${cr2(t)}</td>
-      <td>${n(t.rek_pokazy)}</td><td>${n(t.rek_kliki)}</td><td>${t.rek_pokazy ? pct(t.rek_kliki / t.rek_pokazy, 2) : "—"}</td></tr>`; }).join("")}
+      <td>${n(t.vidyat)}</td><td>${x.poz}</td><td>${x.ctr}</td><td>${x.per}</td><td>${x.gmv}</td><td>${n(t.zakazy)}</td>
+      <td>${x.rp}</td><td>${x.rk}</td><td>${x.rctr}</td></tr>`; }).join("")}
     </tbody></table></div>
     ${vse.some(([, t]) => t.poiskDney) ? "" : `<div class="vnim" style="margin:12px 0 0"><div class="ico">${ik("calendar")}</div><div><b>Поиск за этот день Ozon ещё не выложил</b><span>Обычно он появляется через сутки. Откройте предыдущий день стрелкой «‹» или выберите 7 дней.</span></div></div>`}
-    <div class="tov-mob">${vse.map(([a, t]) => { const poz = t.vidyat ? t.pozVes / t.vidyat : null, konv = t.vidyat ? t.konvVes / t.vidyat : null;
+    <div class="tov-mob">${vse.map(([a, t]) => { const x = r(t);
       return `<div class="tm"><div class="tov">${foto(a)}<div><div class="n">${esc(T(a).nazvanie)}</div>
-      <div class="m">Поиск: уникальные просмотры ${n(t.vidyat)} · позиция ${poz ? Math.round(poz) : "—"}</div>
-      <div class="m">CR1 ${konv != null ? konv.toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + "\u00A0%" : "—"} → переходы ${konv != null ? n(Math.round(t.vidyat * konv / 100)) : "—"} → заказы ${n(t.zakazy)} · CR2 ${cr2(t)}</div>
-      <div class="m">Реклама: показы ${n(t.rek_pokazy)} · клики ${n(t.rek_kliki)} · CTR ${t.rek_pokazy ? pct(t.rek_kliki / t.rek_pokazy, 2) : "—"}</div></div></div></div>`; }).join("")}</div>`;
+      <div class="m">Поиск: уникальные просмотры ${n(t.vidyat)} → CTR ${x.ctr} → переходы ${x.per} · позиция ${x.poz}</div>
+      <div class="m">Заказано из поиска ${x.gmv} · заказов всего ${n(t.zakazy)}</div>
+      <div class="m">Реклама: показы ${x.rp} · клики ${x.rk} · CTR ${x.rctr}</div></div></div></div>`; }).join("")}</div>`;
 }
 function sparki() {
   document.querySelectorAll("svg.spark").forEach(s => {

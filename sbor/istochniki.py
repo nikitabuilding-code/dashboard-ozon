@@ -241,7 +241,7 @@ def reklama(zhurnal, karta, zakazy_po_dnyam, s, dney=14):
     konec = segodnya() - dt.timedelta(days=1)
     nach = max(dt.date.fromisoformat(s), konec - dt.timedelta(days=dney)) if vse else dt.date.fromisoformat(s)
     novoe = defaultdict(lambda: defaultdict(float))
-    trafik = defaultdict(lambda: defaultdict(lambda: {"p": 0.0, "k": 0.0}))     # показы и клики рекламы
+    trafik = defaultdict(lambda: defaultdict(lambda: {"p": 0.0, "k": 0.0}))     # показы и клики рекламы; ob — была общая кампания
     ids = [str(k["id"]) for k in kampanii]
     d = nach
     while d <= konec and ids:
@@ -264,8 +264,11 @@ def reklama(zhurnal, karta, zakazy_po_dnyam, s, dney=14):
                 for a in komu:
                     dolya = ves[a] / vsego if vsego else 1 / len(komu)
                     novoe[den][a] += rashod * dolya
-                    trafik[den][a]["p"] += pokazy * dolya
-                    trafik[den][a]["k"] += kliki * dolya
+                    if len(komu) == 1:          # показы и клики — только точные: кампания одного товара
+                        trafik[den][a]["p"] += pokazy
+                        trafik[den][a]["k"] += kliki
+                    else:                       # общая кампания: Ozon не говорит, чьи показы — не делим на глаз
+                        trafik[den][a]["ob"] = 1
                 if not komu:
                     novoe[den]["_bez_tovara"] += rashod
         d = po + dt.timedelta(days=1)
@@ -274,7 +277,7 @@ def reklama(zhurnal, karta, zakazy_po_dnyam, s, dney=14):
     pisat("reklama.json", vse)
     tr = chitat("reklama_trafik.json")
     for den, o in trafik.items():
-        tr[den] = {a: {"p": round(v["p"]), "k": round(v["k"])} for a, v in o.items()}
+        tr[den] = {a: {"p": round(v["p"]), "k": round(v["k"]), **({"ob": 1} if v.get("ob") else {})} for a, v in o.items()}
     pisat("reklama_trafik.json", tr)
     zhurnal.append(f"реклама: кампаний {len(kampanii)}, перечитано с {nach.isoformat()}")
     return vse

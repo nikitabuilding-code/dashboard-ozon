@@ -19,7 +19,7 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.8"
+VERSIYA = "2026.11.9"
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",

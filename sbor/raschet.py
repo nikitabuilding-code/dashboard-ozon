@@ -175,6 +175,8 @@ def dni(nastroyki, zakazy, nach, reklama, snimki, s, po, poisk=None, rek_trafik=
                 r["poisk"] = pk[offer]
             if offer in rt:
                 r["rek_pokazy"], r["rek_kliki"] = rt[offer]["p"], rt[offer]["k"]
+                if rt[offer].get("ob"):
+                    r["rek_obshchaya"] = 1
             po_tov[offer] = r
             for k in ("zakazy", "prodazhi", "vyruchka", "komissiya", "logistika", "nalog", "zakupka", "reklama", "mp1"):
                 itog[k] += r[k]
