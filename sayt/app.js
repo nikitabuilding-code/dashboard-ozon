@@ -32,11 +32,24 @@ function karkas() {
   const ssylki = kor => RAZDELY.map(([id, t, i, k]) => `<a href="#${id}" data-r="${id}">${ik(i)}<span>${kor ? k : t}</span>${id === "nastroyki" && tochka ? '<i class="tochka"></i>' : ""}</a>`).join("");
   $("#nav").innerHTML = ssylki(false); $("#tabbar").innerHTML = ssylki(true);
   const mag = esc(D.magazin || "Мой магазин");
-  $("#chip-m").innerHTML = `<b>OZON</b>${mag}`;
+  $("#chip-m").innerHTML = `<b>OZON</b><span>${mag}</span>`;
   const ob = D.obnovleno ? new Date(D.obnovleno) : null;
   $("#niz").innerHTML = `<b>${mag}</b>Обновлено ${ob ? ob.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "—"}<br><a href="#" id="vyhod">${ik("log-out").replace("<svg", '<svg style="width:13px;height:13px;vertical-align:-2px"')} Выйти</a>`;
   $("#foot").textContent = `Dashboard Ozon ${D.versiya || ""} · данные Ozon Seller API · заперто вашим паролем`;
   $("#vyhod").onclick = e => { e.preventDefault(); zabytKlyuch(); location.reload(); };
+  // переключатель светлого и тёмного вида — запоминается на этом устройстве
+  const vidK = () => { const sv = document.documentElement.classList.contains("svetlo");
+    return `${ik(sv ? "moon" : "sun")}<span>${sv ? "Тёмный вид" : "Светлый вид"}</span>`; };
+  document.querySelectorAll(".vid-k").forEach(b => b.remove());
+  $("#niz").insertAdjacentHTML("beforebegin", `<button type="button" class="vid-k" id="vid-k">${vidK()}</button>`);
+  $(".mob-top .chip").insertAdjacentHTML("beforebegin", `<button type="button" class="vid-k" id="vid-k-m" aria-label="Сменить вид">${ik(document.documentElement.classList.contains("svetlo") ? "moon" : "sun")}</button>`);
+  const smenit = () => {
+    const sv = document.documentElement.classList.toggle("svetlo");
+    try { localStorage.setItem("do-vid", sv ? "svetlo" : "temno"); } catch (e) {}
+    $("#vid-k").innerHTML = vidK(); $("#vid-k-m").innerHTML = ik(sv ? "moon" : "sun");
+    razdel();                                    // графики перерисовываются в цветах нового вида
+  };
+  $("#vid-k").onclick = smenit; $("#vid-k-m").onclick = smenit;
 }
 
 function razdel() {

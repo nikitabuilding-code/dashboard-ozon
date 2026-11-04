@@ -243,3 +243,58 @@ border:1px solid rgba(255,255,255,.12);color:var(--do-ink);font-weight:650;outli
 
 .tab th small{display:block;font-size:9.5px;letter-spacing:.02em;text-transform:none;color:var(--do-faint);font-weight:600;margin-top:2px}
 .tm .r .m{font-size:11px}.tm .r b{display:block;margin-bottom:3px}
+
+/* ── Светлый вид (05.11.2026): те же неоновые акценты на светлом фоне. Включается классом html.svetlo ── */
+html.svetlo{--do-bg:#F3F6FC;--do-surface:#FFFFFF;--do-ink:#0E1526;--do-muted:#56617E;--do-faint:#8A94B0;--do-grid:rgba(20,40,90,.09);--do-line:rgba(20,40,90,.09);
+--do-plus:#1F9D6B;--do-minus:#E5484D;--do-cyan:#0B98A8}
+html.svetlo,html.svetlo[data-theme],html.svetlo[data-theme] body{background-color:#F3F6FC!important;color-scheme:light}
+html.svetlo body{background:radial-gradient(60% 40% at 0% 0%,rgba(79,140,255,.16),transparent 70%),radial-gradient(45% 35% at 100% 8%,rgba(43,227,155,.12),transparent 70%),
+radial-gradient(50% 40% at 50% 100%,rgba(157,123,255,.12),transparent 70%),linear-gradient(180deg,#F6F8FD,#EEF2FA)!important;color:var(--do-ink)!important}
+html.svetlo body:before{opacity:.5;background-image:linear-gradient(rgba(79,140,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(79,140,255,.08) 1px,transparent 1px)}
+html.svetlo .side{background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(246,248,253,.92))}
+html.svetlo .logo .t{background:linear-gradient(90deg,#0E1526,#2F4A8A);-webkit-background-clip:text;background-clip:text}
+html.svetlo .logo .t span{background:linear-gradient(90deg,#2F64E0,#0E9E6E);-webkit-background-clip:text;background-clip:text;filter:none}
+html.svetlo .mark{background:linear-gradient(145deg,rgba(43,227,155,.22),rgba(79,140,255,.22));box-shadow:0 0 16px rgba(79,140,255,.35)}
+html.svetlo .mark svg{color:#0E8A64;filter:none}
+html.svetlo .nav a:hover{background:rgba(20,40,90,.04)}
+html.svetlo .nav a.on{color:#1E3FA8;background:linear-gradient(90deg,rgba(79,140,255,.16),rgba(79,140,255,.04));box-shadow:inset 0 0 0 1px rgba(79,140,255,.35),0 0 18px -8px rgba(79,140,255,.6)}
+html.svetlo .nav a.on svg{color:#2F64E0;filter:none}
+html.svetlo .side .niz,html.svetlo .kpi,html.svetlo .mes>div{background:rgba(20,40,90,.025)}
+html.svetlo .chip{color:#24304F;background:#fff;border-color:var(--do-line)}
+html.svetlo .tabbar{background:rgba(255,255,255,.92);border-color:rgba(79,140,255,.25);box-shadow:0 0 22px -8px rgba(79,140,255,.5),0 10px 26px rgba(20,40,90,.15)}
+html.svetlo .tabbar a.on{color:#1E3FA8;background:rgba(79,140,255,.12)}html.svetlo .tabbar a.on svg{color:#2F64E0;filter:none}
+html.svetlo .seg{background:rgba(255,255,255,.8)}
+html.svetlo .seg button.on{color:#1E3FA8;background:linear-gradient(180deg,rgba(79,140,255,.2),rgba(79,140,255,.08));box-shadow:inset 0 0 0 1px rgba(79,140,255,.45),0 0 14px -4px rgba(79,140,255,.45)}
+html.svetlo .kn{background:#fff}html.svetlo .kn:hover{color:#1E3FA8}
+html.svetlo .card{background:linear-gradient(180deg,#FFFFFF,#FBFCFF) padding-box,
+ linear-gradient(150deg,var(--do-a),rgba(20,40,90,.07) 34%,rgba(20,40,90,.05) 70%,color-mix(in srgb,var(--do-a) 55%,transparent)) border-box;
+ box-shadow:0 0 26px -12px color-mix(in srgb,var(--do-a) 70%,transparent),0 14px 30px -18px rgba(20,40,90,.25)}
+html.svetlo .ico{background:color-mix(in srgb,var(--do-a) 12%,#fff);box-shadow:0 0 12px -4px color-mix(in srgb,var(--do-a) 60%,transparent)}
+html.svetlo .ico svg{color:color-mix(in srgb,var(--do-a) 80%,#000);filter:none}
+html.svetlo .big.minus{color:#E0413C;text-shadow:0 0 22px rgba(229,72,77,.25)}html.svetlo .big.plus{color:#139463;text-shadow:0 0 22px rgba(31,157,107,.25)}
+html.svetlo .delta{color:#C7302C;background:rgba(229,72,77,.08)}html.svetlo .delta.up{color:#0E7D55;background:rgba(31,157,107,.08)}
+html.svetlo .tip,html.svetlo .soob{background:rgba(255,255,255,.97);color:var(--do-muted);box-shadow:0 8px 24px rgba(20,40,90,.18)}
+html.svetlo .bar{background:rgba(20,40,90,.07)}
+html.svetlo .foto{background-color:#EEF2FA;border-color:var(--do-line);box-shadow:none}
+html.svetlo .fs span:first-child{color:#24304F}html.svetlo .fs.ts{border-top-color:rgba(20,40,90,.18)}
+html.svetlo .znachok{color:#B4570A}
+html.svetlo .vnim{background:linear-gradient(90deg,rgba(255,154,60,.14),rgba(255,154,60,.04));box-shadow:none}
+html.svetlo .vvod{background:#fff;border-color:rgba(20,40,90,.15)}
+html.svetlo .knopka.vtor{color:#1E3FA8;background:#fff;box-shadow:inset 0 0 0 1px rgba(79,140,255,.35)}
+html.svetlo .kalendar{color:#1E3FA8;background:linear-gradient(180deg,rgba(79,140,255,.14),rgba(79,140,255,.05));box-shadow:0 0 14px -6px rgba(79,140,255,.6)}
+html.svetlo .kalendar svg{color:#2F64E0}html.svetlo .kalendar input{color-scheme:light}
+html.svetlo .vhod-k{background:linear-gradient(180deg,#fff,#FBFCFF) padding-box,linear-gradient(150deg,#4F8CFF,rgba(20,40,90,.07) 40%,rgba(43,227,155,.6)) border-box;box-shadow:0 0 40px -14px rgba(79,140,255,.6),0 20px 40px -26px rgba(20,40,90,.4)}
+html.svetlo .vhod-k h1{color:#0E1526}html.svetlo .vhod-k h1 span{color:#0E9E6E}
+html.svetlo .vhod-k .pole-p input{background:#fff;border-color:rgba(20,40,90,.15)}
+html.svetlo .vhod-k .zabyl-k{color:#1E3FA8;background:#fff}
+html.svetlo .zab-okno .zs{background:rgba(20,40,90,.03);border-color:var(--do-line)}html.svetlo .zab-okno .zs b{color:#0E1526}html.svetlo .zab-okno .zs span{color:#56617E}
+html.svetlo .zab-okno a{color:#2F64E0}html.svetlo .zab-okno a.knopka{color:#fff}
+
+/* переключатель вида */
+.vid-k{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;font-size:13px;font-weight:700;color:var(--do-muted);
+border:1px solid var(--do-line);background:rgba(255,255,255,.03);width:100%;box-sizing:border-box;margin-bottom:10px}
+.vid-k:hover{color:var(--do-ink)}.vid-k svg{width:17px;height:17px}
+.mob-top .vid-k{width:auto;margin:0;padding:0;width:38px;height:38px;justify-content:center}
+.mob-top .chip{margin-left:8px}.mob-top{gap:0}.mob-top .logo{margin-right:auto}
+.mob-top .vid-k{flex:none;width:36px;height:36px;margin-left:8px}
+@media(max-width:440px){.mob-top .chip span{display:none}.mob-top .chip{padding:7px 8px}}
