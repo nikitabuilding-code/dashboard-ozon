@@ -148,8 +148,13 @@ GitHub — бесплатный сервис, где хранятся прогр
    1. Откройте **https://github.com/settings/installations** → у «Cloudflare Workers and Pages» нажмите **Configure** → в самом низу, в красной рамке «Danger zone», — **Uninstall** (не Suspend) → подтвердите. Через минуту обновите страницу (Cmd+R на Mac, F5 на Windows) — список должен стать пустым.
    2. Там же вкладка **Authorized GitHub Apps** → у «Cloudflare Workers and Pages» нажмите **Revoke** → подтвердите. Должно стать «No authorized GitHub Apps».
    3. Вернитесь на вкладку Cloudflare со страницей «Make something new», обновите её и повторите **Connect GitHub** с начала этого шага.
-4. Вернётесь в Cloudflare: выберите `dashboard-ozon` → **Next**. Название проекта оставьте `dashboard-ozon`, остальные поля не трогайте → **Deploy**.
-5. Подождите 1–2 минуты. Cloudflare покажет адрес вида **https://dashboard-ozon.что-то.workers.dev** — это ваша ссылка. Сохраните её в закладки на компьютере и телефоне.
+4. Откроется «Select a repository» — в списке ваша папка `dashboard-ozon`. Нажмите на неё, затем синюю **Next** справа внизу.
+5. Откроется «Set up your application» — последний экран перед выкладкой:
+   - **Project name** — должно быть ровно `dashboard-ozon`. Это имя записано внутри программы, и если они не совпадут, выкладка упадёт. Если ваша копия называется иначе и поле подставило другое имя — сотрите и впишите `dashboard-ozon`;
+   - **Build command** — оставьте пустым;
+   - **Deploy command** (`npx wrangler deploy`) и **Preview command** — не трогайте, как и всё ниже;
+   - нажмите синюю **Deploy**.
+6. Подождите 1–2 минуты. Cloudflare покажет адрес вида **https://dashboard-ozon.что-то.workers.dev** — это ваша ссылка. Сохраните её в закладки на компьютере и телефоне.
 
 **Как понять, что получилось:** ссылка открывается и пишет «Задайте пароль…». Это нормально: пароль — следующий шаг.
 
