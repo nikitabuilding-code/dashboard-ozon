@@ -106,7 +106,7 @@ async function api(req, env, put) {
 function stranicaVhoda(oshibka) {
   return new Response(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Ozon — вход</title><link rel="stylesheet" href="/vhod.css"></head><body>
-<form method="post" action="/vhod" class="vhod"><div class="mark"></div><h1>Dashboard Ozon</h1><p>Прибыль вашего магазина</p>
+<form method="post" action="/vhod" class="vhod"><div class="mark"><svg style="width:28px;height:28px;color:#CFFFEA;filter:drop-shadow(0 0 8px rgba(43,227,155,.9))" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></svg></div><h1>Dashboard Ozon</h1><p>Прибыль вашего магазина</p>
 <input type="password" name="parol" placeholder="Пароль" autofocus autocomplete="current-password" required>
 ${oshibka ? `<div class="osh">${oshibka}</div>` : ""}<button>Войти</button></form></body></html>`,
     { status: oshibka ? 401 : 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
