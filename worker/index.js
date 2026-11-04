@@ -140,7 +140,9 @@ export default {
     }
     const r = await env.ASSETS.fetch(req);
     const h = new Headers(r.headers);
-    h.set("Cache-Control", url.pathname.endsWith(".json") || url.pathname === "/" ? "no-store" : "public, max-age=3600");
+    // шрифты не меняются — храним долго; страницу, код и данные браузер каждый раз сверяет, чтобы новая версия
+    // появлялась после обычного обновления страницы, а не через час
+    h.set("Cache-Control", url.pathname.startsWith("/shrifty/") ? "public, max-age=2592000" : "no-cache");
     h.set("X-Frame-Options", "DENY");
     h.set("Referrer-Policy", "no-referrer");
     return new Response(r.body, { status: r.status, headers: h });
