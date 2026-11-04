@@ -20,7 +20,8 @@ const zn = v => v < 0 ? "minus" : "plus";
 const ik = n => IK[n] || "";
 
 let D = null, ST = { period: "den", den: null };
-const RAZDELY = [["obzor", "Обзор", "layout-dashboard"], ["fakt", "Факт", "file-text"], ["tovary", "Товары", "boxes"], ["nastroyki", "Настройки", "settings"]];
+const RAZDELY = [["obzor", "Дашборд", "layout-dashboard", "Дашборд"], ["fakt", "Фактическая прибыль / убыток", "file-text", "Прибыль / убыток"],
+  ["tovary", "Товары", "boxes", "Товары"], ["nastroyki", "Настройки", "settings", "Настройки"]];
 
 function soob(t, osh) { const e = $("#soob"); e.textContent = t; e.className = "soob" + (osh ? " osh" : ""); e.style.display = "block"; clearTimeout(soob.t); soob.t = setTimeout(() => e.style.display = "none", 4200); }
 
@@ -28,8 +29,8 @@ function soob(t, osh) { const e = $("#soob"); e.textContent = t; e.className = "
 function karkas() {
   document.querySelectorAll("[data-ik]").forEach(e => e.innerHTML = ik(e.dataset.ik));
   const tochka = D && D.bez_zakupki && D.bez_zakupki.length;
-  const ssylki = RAZDELY.map(([id, t, i]) => `<a href="#${id}" data-r="${id}">${ik(i)}<span>${t}</span>${id === "nastroyki" && tochka ? '<i class="tochka"></i>' : ""}</a>`).join("");
-  $("#nav").innerHTML = ssylki; $("#tabbar").innerHTML = ssylki;
+  const ssylki = kor => RAZDELY.map(([id, t, i, k]) => `<a href="#${id}" data-r="${id}">${ik(i)}<span>${kor ? k : t}</span>${id === "nastroyki" && tochka ? '<i class="tochka"></i>' : ""}</a>`).join("");
+  $("#nav").innerHTML = ssylki(false); $("#tabbar").innerHTML = ssylki(true);
   const mag = esc(D.magazin || "Мой магазин");
   $("#chip-m").innerHTML = `<b>OZON</b>${mag}`;
   const ob = D.obnovleno ? new Date(D.obnovleno) : null;
@@ -88,11 +89,17 @@ function obzor() {
   const ozon = S.komissiya + S.logistika;
   const vnim = D.bez_zakupki && D.bez_zakupki.length ? `<div class="vnim"><div class="ico">${ik("triangle-alert")}</div><div><b>Укажите закупку для ${D.bez_zakupki.length} ${D.bez_zakupki.length === 1 ? "товара" : "товаров"}</b>
     <span>Без неё прибыль по ним завышена: закупка считается нулём.</span></div><a class="knopka malaya kn2" href="#nastroyki">Открыть настройки</a></div>` : "";
-  const mes = dni[dni.length - 1].d.slice(0, 7), dm = dni.filter(d => d.d.startsWith(mes)), uzhe = dm.reduce((s, d) => s + d.chistymi, 0);
+  // месяц выбранного дня: с 1-го числа по выбранный день; прошедший месяц — с итогом, текущий — с прогнозом
+  const dKon = V.dni[V.dni.length - 1].d, mes = dKon.slice(0, 7), vesMes = dni.filter(d => d.d.startsWith(mes));
+  const dm = vesMes.filter(d => d.d <= dKon), uzhe = dm.reduce((s, d) => s + d.chistymi, 0);
   const vMes = new Date(Date.UTC(+mes.slice(0, 4), +mes.slice(5), 0)).getUTCDate();
+  const proshel = mes < dni[dni.length - 1].d.slice(0, 7) && vesMes.length >= vMes;
+  const itogMes = vesMes.reduce((s, d) => s + d.chistymi, 0);
   $("#ekran").innerHTML = `
-  <div class="shapka"><div><h1>Обзор</h1><div class="pod">${esc(V.podpis)}</div></div>
-    <div class="ryad">${ST.period === "den" ? `<div class="den-nav"><button class="kn" id="pred" ${iDen <= 0 ? "disabled" : ""} aria-label="Предыдущий день">${ik("chevron-left")}</button>
+  <div class="shapka"><div><h1>Дашборд</h1><div class="pod">${esc(V.podpis)}</div></div>
+    <div class="ryad"><label class="kalendar" title="Выбрать дату">${ik("calendar")}<span>Выбрать дату</span>
+      <input type="date" id="vybor-daty" min="${dni[0].d}" max="${dni[dni.length - 1].d}" value="${dni[iDen].d}"></label>
+    ${ST.period === "den" ? `<div class="den-nav"><button class="kn" id="pred" ${iDen <= 0 ? "disabled" : ""} aria-label="Предыдущий день">${ik("chevron-left")}</button>
       <button class="kn" id="sled" ${iDen >= dni.length - 1 ? "disabled" : ""} aria-label="Следующий день">${ik("chevron-right")}</button></div>` : ""}
     <div class="seg">${periody.map(([k, t]) => `<button data-p="${k}" class="${ST.period === k ? "on" : ""}">${t}</button>`).join("")}</div></div></div>
   ${vnim}
@@ -110,13 +117,21 @@ function obzor() {
       <div class="itog"><span>Осталось чистыми</span><b class="${zn(S.chistymi)}">${rub(S.chistymi)}</b></div></section>
     <section class="card s7"><div class="hd"><div class="ico">${ik("trending-up")}</div><div><h2>Выручка по дням</h2><div class="s">последние 30 дней · наведите на график</div></div></div><div class="chart" id="g-vyr"></div></section>
     <section class="card s5 v"><div class="hd"><div class="ico">${ik("calendar")}</div><div><h2>${MES_I[+mes.slice(5) - 1]}</h2><div class="s">прибыль с начала месяца</div></div></div>
-      <div class="mes"><div><div class="l">Уже</div><div class="n ${zn(uzhe)}">${rub(uzhe)}</div><div class="mut">за ${dm.length} ${dm.length === 1 ? "день" : dm.length < 5 ? "дня" : "дней"}</div></div>
-      <div><div class="l">Прогноз на месяц</div><div class="n ${zn(uzhe)}">${rub(uzhe / dm.length * vMes)}</div><div class="mut">если темп сохранится</div></div></div>
-      <div class="bar"><i style="width:${Math.round(dm.length / vMes * 100)}%"></i></div><div class="mut">прошло ${dm.length} из ${vMes} дней</div></section>
+      <div class="mes"><div><div class="l">По ${dKor(dKon)}</div><div class="n ${zn(uzhe)}">${rub(uzhe)}</div><div class="mut">за ${dm.length} ${dm.length === 1 ? "день" : dm.length < 5 ? "дня" : "дней"}</div></div>
+      ${proshel ? `<div><div class="l">Итог месяца</div><div class="n ${zn(itogMes)}">${rub(itogMes)}</div><div class="mut">за все ${vMes} дней</div></div>`
+        : `<div><div class="l">Прогноз на месяц</div><div class="n ${zn(uzhe)}">${rub(uzhe / dm.length * vMes)}</div><div class="mut">если темп сохранится</div></div>`}</div>
+      <div class="bar"><i style="width:${Math.round(dm.length / vMes * 100)}%"></i></div><div class="mut">${dm.length} из ${vMes} дней месяца</div></section>
     <section class="card s12 g"><div class="hd"><div class="ico">${ik("chart-column")}</div><div><h2>Прибыль по дням</h2><div class="s">последние 30 дней · нажмите на столбик, чтобы открыть день</div></div></div><div class="chart" id="g-st"></div></section>
     <section class="card s12"><div class="hd"><div class="ico">${ik("package")}</div><div><h2>Товары</h2><div class="s">${esc(V.podpis)} · линия — прибыль за 14 дней</div></div></div><div id="t-tov"></div></section>
   </div>`;
   document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { ST.period = b.dataset.p; ST.den = null; obzor(); });
+  const vd = $("#vybor-daty");
+  vd.onclick = () => { try { vd.showPicker(); } catch (e) {} };
+  vd.onchange = () => {
+    const i = dni.findIndex(d => d.d === vd.value);
+    if (i < 0) { soob("За эту дату данных нет — выберите день с " + dKor(dni[0].d) + " по " + dKor(dni[dni.length - 1].d), true); return; }
+    ST.period = "den"; ST.den = i; obzor();
+  };
   if ($("#pred")) { $("#pred").onclick = () => { ST.den = iDen - 1; obzor(); }; $("#sled").onclick = () => { ST.den = iDen + 1; obzor(); }; }
   koltso(S); tablicaTovarov(S, V);
   const ris = () => { grafikVyruchki(V); stolbiki(V); sparki(); };
@@ -216,12 +231,12 @@ function sparki() {
 // ── «Факт» ────────────────────────────────────────────────────────────────────
 function fakt() {
   const mesyacy = Object.keys(D.fakt || {}).sort();
-  if (!mesyacy.length) { $("#ekran").innerHTML = `<div class="shapka"><h1>Факт</h1></div><div class="card"><div class="pusto-blok">Начисления Ozon ещё не собраны</div></div>`; return; }
+  if (!mesyacy.length) { $("#ekran").innerHTML = `<div class="shapka"><h1>Фактическая прибыль / убыток</h1></div><div class="card"><div class="pusto-blok">Начисления Ozon ещё не собраны</div></div>`; return; }
   const m = ST.fm && D.fakt[ST.fm] ? ST.fm : mesyacy[mesyacy.length - 1], F = D.fakt[m];
   const nazv = k => `${MES_I[+k.slice(5) - 1]} ${k.slice(0, 4)}`;
   const str = (t, v, pod, klass = "") => `<div class="fs ${klass}"><span>${t}${pod ? `<em>${pod}</em>` : ""}</span><b class="${klass === "ts" ? zn(v) : ""}">${rub(v)}</b></div>`;
   $("#ekran").innerHTML = `
-  <div class="shapka"><div><h1>Факт</h1><div class="pod">реальные деньги по начислениям Ozon</div></div>
+  <div class="shapka"><div><h1>Фактическая прибыль / убыток</h1><div class="pod">реальные деньги по начислениям Ozon</div></div>
     <div class="seg">${mesyacy.slice(-6).map(k => `<button data-m="${k}" class="${k === m ? "on" : ""}">${MES_I[+k.slice(5) - 1].slice(0, 3)}</button>`).join("")}</div></div>
   <div class="grid">
     <section class="card s7 g"><div class="hd"><div class="ico">${ik("receipt")}</div><div><h2>${nazv(m)}</h2><div class="s">${F.polnyy ? "месяц закрыт" : `месяц ещё идёт · ${F.dney} дн.`}</div></div>

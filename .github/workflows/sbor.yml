@@ -23,6 +23,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Обновить инструмент из образца
+        # каждое утро подтягивает свежую версию программы; настройки и история не трогаются
+        run: bash sbor/obnovit.sh || echo "Обновление не удалось — работаю на прежней версии"
       - name: Сбор и расчёт
         env:
           OZON_CLIENT_ID: ${{ secrets.OZON_CLIENT_ID }}

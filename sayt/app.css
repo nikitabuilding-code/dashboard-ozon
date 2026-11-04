@@ -185,3 +185,13 @@ border:1px solid rgba(43,227,155,.55);box-shadow:0 0 24px -6px rgba(43,227,155,.
  .tab.nastr td{display:block;border:0;padding:0;text-align:left}.tab.nastr td:first-child{grid-column:1/-1;margin-bottom:4px}
  .tab.nastr td[data-l]:before{content:attr(data-l);display:block;font-size:11px;color:var(--do-faint);font-weight:700;margin-bottom:5px}
  .tab.nastr .vvod.malo{width:100%}}
+
+/* выбор даты */
+.kalendar{position:relative;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:13px;cursor:pointer;font-weight:700;font-size:13.5px;color:#DCE6FF;
+background:linear-gradient(180deg,rgba(79,140,255,.22),rgba(79,140,255,.08));border:1px solid rgba(120,170,255,.5);box-shadow:0 0 18px -6px rgba(79,140,255,.8)}
+.kalendar:hover{border-color:rgba(160,195,255,.9)}
+.kalendar svg{width:17px;height:17px;color:#9FC0FF}
+.kalendar input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;color-scheme:dark}
+.nav a span{line-height:1.25}
+@media(max-width:1023px){.shapka .ryad{width:100%}.kalendar{flex:1 0 auto;justify-content:center}}
+.tabbar a span{text-align:center;line-height:1.15}
