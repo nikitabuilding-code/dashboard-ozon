@@ -1,0 +1,35 @@
+name: Сбор данных
+
+on:
+  schedule:
+    - cron: "33 4 * * *"      # 07:33 по Москве; GitHub иногда запускает с опозданием до часа
+  workflow_dispatch:          # кнопка «Пересчитать» на странице и вкладка Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sbor
+  cancel-in-progress: false
+
+jobs:
+  sbor:
+    # в самом шаблоне ключей нет — собирают только копии пользователей
+    if: github.repository != 'nikitabuilding-code/dashboard-ozon'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Сбор и расчёт
+        env:
+          OZON_CLIENT_ID: ${{ secrets.OZON_CLIENT_ID }}
+          OZON_API_KEY: ${{ secrets.OZON_API_KEY }}
+          OZON_PERF_CLIENT_ID: ${{ secrets.OZON_PERF_CLIENT_ID }}
+          OZON_PERF_SECRET: ${{ secrets.OZON_PERF_SECRET }}
+        run: python3 sbor/glavnaya.py
+      - name: Сохранить
+        if: always()
+        run: bash sbor/sohranit.sh "Сбор данных"

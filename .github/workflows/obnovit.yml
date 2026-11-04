@@ -1,0 +1,16 @@
+name: Обновить инструмент
+
+on:
+  workflow_dispatch:          # кнопка «Обновить» на странице настроек
+
+permissions:
+  contents: write
+
+jobs:
+  obnovit:
+    if: github.repository != 'nikitabuilding-code/dashboard-ozon'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Взять свежий код из шаблона
+        run: bash sbor/obnovit.sh

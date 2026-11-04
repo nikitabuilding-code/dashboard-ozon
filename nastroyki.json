@@ -1,0 +1,14 @@
+{
+  "magazin": "",
+  "tovary": {},
+  "nalog": [
+    {
+      "s": "2020-01-01",
+      "rezhim": "usn_dohody",
+      "usn": 0.06,
+      "nds": 0
+    }
+  ],
+  "opr": [],
+  "istoriya_s": null
+}
