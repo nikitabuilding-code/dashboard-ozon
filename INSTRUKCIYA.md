@@ -4,6 +4,8 @@ Dashboard Ozon каждое утро сам забирает данные ваш
 
 **Что понадобится:** доступ владельца к кабинету продавца Ozon, почта, примерно час времени. Всё делается в браузере, одинаково на Mac и Windows. Удобнее с компьютера.
 
+**Если закрыли вкладку и не знаете, куда вернуться:** GitHub — **github.com** (справа вверху значок вашего аккаунта → **Your repositories** → `dashboard-ozon`); Cloudflare — **dash.cloudflare.com** → слева **Compute** → **Workers & Pages** → `dashboard-ozon`. В каждом шаге ниже есть и прямые ссылки.
+
 **Главное правило:** ключи, которые вы создадите, — как пароль от кабинета. Вставляйте их только туда, куда сказано в инструкции. Никому не пересылайте, в чаты не вставляйте. Пока идёте по шагам, можно держать их в заметке на своём компьютере, а в конце эту заметку удалить.
 
 ---
@@ -185,8 +187,11 @@ GitHub — бесплатный сервис, где хранятся прогр
 
 ### 6.2. Пароль и пропуск — в Cloudflare
 
-1. В Cloudflare: **Workers & Pages** → нажмите на `dashboard-ozon` → вкладка **Settings** → раздел **Variables and Secrets** → кнопка **Add**.
-2. Добавьте три строки — для каждой выберите **Type**, впишите **Variable name** и **Value**:
+1. Откройте настройки своей страницы в Cloudflare. Даже если все вкладки уже закрыты — по прямой ссылке (Cloudflare сам подставит ваш аккаунт; если попросит — войдите):
+   **https://dash.cloudflare.com/?to=/:account/workers/services/view/dashboard-ozon/production/settings**
+   Если ссылка не открылась — руками: **dash.cloudflare.com** → слева **Compute** → **Workers & Pages** → в списке **dashboard-ozon** → вверху вкладка **Settings** (последняя в ряду Overview, Metrics, Deployments…).
+2. На странице настроек найдите раздел **Variables and Secrets** → кнопка **Add**.
+3. Добавьте три строки — для каждой выберите **Type**, впишите **Variable name** и **Value**:
 
 | Type | Variable name | Value |
 |---|---|---|
@@ -194,7 +199,7 @@ GitHub — бесплатный сервис, где хранятся прогр
 | **Secret** | `GITHUB_TOKEN` | строка `github_pat_…` из шага 6.1 |
 | **Text** | `GITHUB_REPO` | ваш-логин/dashboard-ozon (например `ivanov/dashboard-ozon`) |
 
-3. Нажмите **Deploy** (или **Save and deploy**).
+4. Нажмите **Deploy** (или **Save and deploy**).
 
 **Как понять, что получилось:** ссылка из шага 5 теперь открывает страницу входа «Dashboard Ozon» с полем для пароля.
 
