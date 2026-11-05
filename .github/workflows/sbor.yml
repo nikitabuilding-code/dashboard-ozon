@@ -17,7 +17,7 @@ jobs:
     # в самом шаблоне ключей нет — собирают только копии пользователей
     if: github.repository != 'nikitabuilding-code/dashboard-ozon'
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 120      # несколько магазинов собираются по очереди
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -35,6 +35,8 @@ jobs:
           PAROL: ${{ secrets.PAROL }}
           DO_PROPUSK: ${{ secrets.DO_PROPUSK }}
           PROPUSK_GITHUB: ${{ secrets.PROPUSK_GITHUB }}
+          # все секреты разом — для второго и следующих магазинов (OZON_CLIENT_ID_2 и т. д.)
+          SEKRETY: ${{ toJSON(secrets) }}
         run: python3 sbor/glavnaya.py
       - name: Сохранить
         if: always()

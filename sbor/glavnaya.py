@@ -2,6 +2,12 @@
 
 Запуск: python3 sbor/glavnaya.py  (ключи Ozon — в переменных окружения, см. ozon.py).
 Первый запуск сам заводит nastroyki.json, подтягивает товары и историю за ISTORIYA_DNEY дней.
+
+Несколько магазинов (кабинетов Ozon) в одной копии: первый — секреты OZON_CLIENT_ID, OZON_API_KEY,
+OZON_PERF_CLIENT_ID, OZON_PERF_SECRET; второй и дальше — те же имена с номером: OZON_CLIENT_ID_2 и т. д.
+Все секреты робот получает одной переменной SEKRETY (в sbor.yml: toJSON(secrets)). Данные первого магазина —
+dannye/ и nastroyki.json, остальных — magaziny/<номер>/dannye/ и magaziny/<номер>/nastroyki.json.
+Всё уходит на страницу одним шифром; адрес и пароль общие.
 """
 import datetime as dt
 import json
@@ -19,7 +25,9 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.9"
+VERSIYA = "2026.11.10"
+MAKS_MAGAZINOV = 9
+KLYUCHI = ("OZON_CLIENT_ID", "OZON_API_KEY", "OZON_PERF_CLIENT_ID", "OZON_PERF_SECRET")
 
 NASTROYKI_PO_UMOLCHANIYU = {
     "magazin": "",
@@ -46,12 +54,70 @@ class Zhurnal(list):
         super().append(z)
 
 
+def sekrety():
+    """Все секреты копии. Новый sbor.yml отдаёт их одной переменной SEKRETY; старый — только 7 по именам."""
+    try:
+        vse = json.loads(os.environ.get("SEKRETY") or "")
+        if isinstance(vse, dict):
+            return {k: str(v) for k, v in vse.items()}, True
+    except ValueError:
+        pass
+    return {k: os.environ[k] for k in KLYUCHI if os.environ.get(k)}, False
+
+
+def magaziny(sek):
+    """Номера магазинов, для которых в сейфе есть ключи Seller API: [1, 2, …]."""
+    nomera = [1] if sek.get("OZON_CLIENT_ID") and sek.get("OZON_API_KEY") else []
+    for k in range(2, MAKS_MAGAZINOV + 1):
+        if sek.get(f"OZON_CLIENT_ID_{k}") and sek.get(f"OZON_API_KEY_{k}"):
+            nomera.append(k)
+    return nomera
+
+
+def vybrat_magazin(k, sek):
+    """Переключить сбор на магазин k: его ключи, его папка данных и настроек."""
+    global NASTROYKI, DATA
+    hvost = "" if k == 1 else f"_{k}"
+    for imya in KLYUCHI:
+        znach = sek.get(imya + hvost)
+        if znach:
+            os.environ[imya] = znach
+        else:
+            os.environ.pop(imya, None)
+    ozon._perf_token.update(t=None, do=0)
+    papka = I.KOREN if k == 1 else os.path.join(I.KOREN, "magaziny", str(k))
+    I.DANNYE = os.path.join(papka, "dannye")
+    NASTROYKI = os.path.join(papka, "nastroyki.json")
+    DATA = os.path.join(I.KOREN, "sayt", "data.json") if k == 1 else os.path.join(papka, "data.json")
+
+
 def main():
-    zhurnal, oshibki = Zhurnal(), []
-    print("Начинаю сбор. Первый раз — история за 3 месяца, это 5–15 минут.", flush=True)
-    if not ozon.est_klyuchi():
+    sek, vse_sekrety = sekrety()
+    nomera = magaziny(sek)
+    if not nomera:
         print("Нет ключей Ozon: задайте OZON_CLIENT_ID и OZON_API_KEY в секретах репозитория.")
         return 1
+    if not vse_sekrety:
+        print("· робот старой версии: видит только первый магазин. Чтобы добавить ещё магазины, обновите файл "
+              ".github/workflows/sbor.yml (Dashboard → Настройки → «Магазины»).", flush=True)
+    paket = []
+    for k in nomera:
+        vybrat_magazin(k, sek)
+        print(f"\n══ Магазин {k} ══", flush=True)
+        try:
+            data = sobrat_magazin(k)
+        except Exception as e:                      # один магазин упал целиком — остальные всё равно на страницу
+            traceback.print_exc()
+            data = {"versiya": VERSIYA, "magazin": nastroyki().get("magazin") or "", "oshibki": [f"сбор: {e}"],
+                    "dni": [], "fakt": [], "tovary": {}, "obnovleno": dt.datetime.now(I.MSK).isoformat(timespec="minutes")}
+        paket.append({"n": k, "nazvanie": data.get("magazin") or f"Магазин {k}", "data": data})
+    robot = {"vse_sekrety": vse_sekrety, "sleduyushchiy": next(k for k in range(2, MAKS_MAGAZINOV + 2) if k not in nomera)}
+    return otpravit_na_stranicu(paket, robot)
+
+
+def sobrat_magazin(k):
+    zhurnal, oshibki = Zhurnal(), []
+    print("Начинаю сбор. Первый раз — история за 3 месяца, это 5–15 минут.", flush=True)
     n = nastroyki()
     segodnya = I.segodnya()
     # Настройки пишет только страница «Настройки» — сборщик их не трогает, чтобы не затереть правки.
@@ -109,10 +175,10 @@ def main():
     os.replace(DATA + ".tmp", DATA)
     print(f"Готово: посчитано дней {len(dni)}, месяцев факта {len(fakt)}"
           + (f", ошибок {len(oshibki)}" if oshibki else ", без ошибок"), flush=True)
-    return otpravit_na_stranicu(data)
+    return data
 
 
-def otpravit_na_stranicu(data):
+def otpravit_na_stranicu(paket, robot):
     """Запереть результат паролем и отправить шифр на сервер-«окно». Ошибка — красный крестик в GitHub."""
     parol, propusk = os.environ.get("PAROL") or "", os.environ.get("DO_PROPUSK") or ""
     if not propusk or not parol:
@@ -127,11 +193,13 @@ def otpravit_na_stranicu(data):
     adres = propusk.split(":", 1)[0]
     gh = {"repo": os.environ.get("GITHUB_REPOSITORY") or "", "token": os.environ.get("PROPUSK_GITHUB") or ""}
     try:
-        shifr.otpravit(shifr.zaperet({"data": data, "gh": gh}, parol, adres, gh["repo"]), propusk)
+        # data — первый магазин (так страница старой версии тоже откроется), magaziny — все
+        shifr.otpravit(shifr.zaperet({"data": paket[0]["data"], "magaziny": paket, "robot": robot, "gh": gh},
+                                     parol, adres, gh["repo"]), propusk)
     except Exception as e:
         print(f"⚠ Страница не обновлена: {e}", flush=True)
         return 1
-    print("· страница обновлена: данные заперты вашим паролем и отправлены", flush=True)
+    print(f"· страница обновлена: данные заперты вашим паролем и отправлены (магазинов: {len(paket)})", flush=True)
     print(f"· адрес вашего Dashboard: {shifr.SERVER.rstrip('/')}/{adres}/", flush=True)
     if not gh["token"]:
         print("⚠ Нет секрета PROPUSK_GITHUB — на странице не будут работать «Настройки» (шаг 3 и 5).", flush=True)

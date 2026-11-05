@@ -305,3 +305,56 @@ border:1px solid var(--do-line);background:rgba(255,255,255,.03);width:100%;box-
 #t-traf .tab th,#t-traf .tab td{padding-left:7px;padding-right:7px}
 #t-traf .tab th{white-space:normal;vertical-align:bottom}
 #t-traf .tab th small{max-width:96px;margin-left:auto}
+
+/* ── несколько магазинов: кнопка в левой колонке, меню, окно «Добавить магазин» ── */
+.side .niz .mag-k{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:calc(100% + 12px);margin:-6px -6px 8px;padding:7px 8px;border-radius:11px;transition:background .15s}
+.side .niz .mag-k:hover,.side .niz .mag-k:focus-visible{background:rgba(255,255,255,.06)}
+.mag-k .mi,.mag-menu .mi,.mag-spisok .mi{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#9FC0FF;background:rgba(79,140,255,.14);border:1px solid rgba(79,140,255,.35)}
+.mag-k .mi svg,.mag-menu .mi svg,.mag-spisok .mi svg{width:16px;height:16px}
+.mag-k .mt{flex:1;min-width:0}.side .niz .mag-k .mt b{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mag-k .mt small{display:block;font-size:11px;color:var(--do-muted);font-weight:600}
+.mag-k>svg{flex:none;width:15px;height:15px;color:var(--do-muted)}
+.chip{cursor:pointer}.chip>svg{width:14px;height:14px;margin-left:-2px;opacity:.7}
+.mag-menu{position:fixed;z-index:60;width:272px;padding:6px;border-radius:16px;background:#0E1528;border:1px solid rgba(120,170,255,.35);box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 24px rgba(79,140,255,.25)}
+.mag-menu .mm-z{padding:8px 10px 6px;font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--do-muted)}
+.mag-menu button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:11px;font-size:13.5px;font-weight:700;color:var(--do-ink)}
+.mag-menu button:hover{background:rgba(255,255,255,.06)}.mag-menu button.on{background:rgba(79,140,255,.12)}
+.mag-menu .mt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}.mag-menu .mt small{display:block;font-size:11px;font-weight:600}
+.mag-menu button>svg{width:16px;height:16px;color:#5FE3B0}
+.mag-menu .mm-plus{margin-top:4px;border-top:1px solid var(--do-line);border-radius:0 0 11px 11px;color:#9FC0FF}
+.mag-menu .mm-plus .mi{background:transparent;border-style:dashed}
+.osh{color:#FF8A8A;font-style:normal}
+.mag-spisok{display:grid;gap:8px;margin:2px 0 14px}
+.mag-spisok button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--do-line)}
+.mag-spisok button.on{border-color:rgba(79,140,255,.6);background:rgba(79,140,255,.08)}
+.mag-spisok .mt{flex:1;min-width:0}.mag-spisok .mt b{display:block;font-size:14px}.mag-spisok .mt small{display:block;font-size:12px;color:var(--do-muted);font-weight:600;margin-top:2px}
+.mag-spisok code{font:600 11.5px/1 Manrope,sans-serif;padding:2px 6px;border-radius:6px;background:rgba(79,140,255,.14);color:#9FC0FF}
+.mag-spisok em{font-style:normal;font-size:12px;font-weight:700;color:var(--do-muted)}.mag-spisok button.on em{color:#5FE3B0}
+.okno-fon{position:fixed;inset:0;z-index:70;background:rgba(3,6,14,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow-y:auto;padding:28px 14px;display:flex;justify-content:center;align-items:flex-start}
+.okno-fon .okno{position:relative;width:100%;max-width:560px;padding:30px 26px 22px;border-radius:24px;background:linear-gradient(180deg,#0F1830,#0A1122);border:1px solid rgba(120,170,255,.4);box-shadow:0 0 40px rgba(79,140,255,.3)}
+.okno-fon .okno h1{font:700 22px Unbounded,sans-serif;color:#fff;margin:0 0 8px}
+.okno-fon .okno>p{color:#B9C4E6;font-size:13.5px;line-height:1.55;margin:0 0 6px;text-align:center}
+.okno-x{all:unset;cursor:pointer;position:absolute;top:14px;right:16px;width:32px;height:32px;display:grid;place-items:center;border-radius:10px;color:#B9C4E6;font-size:15px}
+.okno-x:hover{background:rgba(255,255,255,.08)}
+.okno .zs span{margin-top:6px}
+.okno .zs .knopka{display:flex;justify-content:center;align-items:center;gap:8px;margin:10px 0 2px}
+.okno .zs .knopka svg{width:15px;height:15px}
+.okno .km{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;padding:8px 10px;border-radius:11px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07)}
+.okno .km code{font:700 13px/1.2 Manrope,sans-serif;color:#CFE0FF}
+.okno .km em{flex-basis:100%;font-style:normal;font-size:12px;color:#8D97B5}
+.kop{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-left:auto;padding:5px 9px;border-radius:8px;font-size:12px;font-weight:750;color:#9FC0FF;background:rgba(79,140,255,.14);border:1px solid rgba(79,140,255,.35)}
+.kop svg,.knopka.ok svg{width:13px;height:13px}.kop.ok,.knopka.ok{color:#5FE3B0!important;border-color:rgba(43,227,155,.5)}
+html.svetlo .mag-menu{background:#fff;border-color:var(--do-line);box-shadow:0 18px 50px rgba(20,40,90,.18)}
+html.svetlo .mag-menu button:hover,html.svetlo .side .niz .mag-k:hover{background:rgba(20,40,90,.05)}
+html.svetlo .mag-menu button.on{background:rgba(47,100,224,.08)}
+html.svetlo .mag-k .mi,html.svetlo .mag-menu .mi,html.svetlo .mag-spisok .mi{color:#2F64E0;background:rgba(47,100,224,.08);border-color:rgba(47,100,224,.3)}
+html.svetlo .mag-menu button>svg,html.svetlo .mag-spisok button.on em{color:#1F9D6B}
+html.svetlo .mag-spisok code{background:rgba(47,100,224,.08);color:#2F64E0}
+html.svetlo .okno-fon{background:rgba(20,30,60,.45)}
+html.svetlo .okno-fon .okno{background:#fff;border-color:var(--do-line);box-shadow:0 20px 60px rgba(20,40,90,.25)}
+html.svetlo .okno-fon .okno h1{color:#0E1526}html.svetlo .okno-fon .okno>p,html.svetlo .okno-x{color:#4A5578}
+html.svetlo .okno .zs{background:#F5F7FC;border-color:var(--do-line)}html.svetlo .okno .zs b{color:#0E1526}html.svetlo .okno .zs span{color:#3A4566}
+html.svetlo .okno .km{background:#fff;border-color:var(--do-line)}html.svetlo .okno .km code{color:#2343B5}
+html.svetlo .kop{color:#2F64E0;background:rgba(47,100,224,.08);border-color:rgba(47,100,224,.3)}
+.mag-menu{box-sizing:border-box;max-width:calc(100vw - 20px)}
+@media(max-width:760px){.mag-menu{left:auto!important;right:10px}}

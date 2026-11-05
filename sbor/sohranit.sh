@@ -4,6 +4,7 @@ set -u
 git config user.name "dashboard-ozon"
 git config user.email "dashboard-ozon@users.noreply.github.com"
 git add dannye sayt/data.json 2>/dev/null || true   # nastroyki.json пишет только страница
+for m in magaziny/*/; do [ -d "$m" ] && git add "${m}dannye" "${m}data.json" 2>/dev/null; done; true
 if git diff --cached --quiet; then
   echo "Данные не изменились"
   exit 0

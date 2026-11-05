@@ -20,6 +20,7 @@ const zn = v => v < 0 ? "minus" : "plus";
 const ik = n => IK[n] || "";
 
 let D = null, ST = { period: "den", den: null };
+let P = null, MAGS = [], MAG = 1;           // весь пакет, все магазины, номер открытого
 const RAZDELY = [["obzor", "Дашборд", "layout-dashboard", "Дашборд"], ["fakt", "Фактическая прибыль / убыток", "file-text", "Прибыль / убыток"],
   ["tovary", "Товары", "boxes", "Товары"], ["nastroyki", "Настройки", "settings", "Настройки"]];
 
@@ -31,10 +32,13 @@ function karkas() {
   const tochka = D && D.bez_zakupki && D.bez_zakupki.length;
   const ssylki = kor => RAZDELY.map(([id, t, i, k]) => `<a href="#${id}" data-r="${id}">${ik(i)}<span>${kor ? k : t}</span>${id === "nastroyki" && tochka ? '<i class="tochka"></i>' : ""}</a>`).join("");
   $("#nav").innerHTML = ssylki(false); $("#tabbar").innerHTML = ssylki(true);
-  const mag = esc(D.magazin || "Мой магазин");
-  $("#chip-m").innerHTML = `<b>OZON</b><span>${mag}</span>`;
+  const mag = esc(imyaMag(MAGS.find(m => m.n === MAG) || { n: MAG, data: D }));
+  $("#chip-m").innerHTML = `<b>OZON</b><span>${mag}</span>${ik("chevrons-up-down")}`;
+  $("#chip-m").onclick = e => { e.stopPropagation(); menyuMagazinov($("#chip-m")); };
   const ob = D.obnovleno ? new Date(D.obnovleno) : null;
-  $("#niz").innerHTML = `<b>${mag}</b>Обновлено ${ob ? ob.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "—"}<br><a href="#" id="vyhod">${ik("log-out").replace("<svg", '<svg style="width:13px;height:13px;vertical-align:-2px"')} Выйти</a>`;
+  $("#niz").innerHTML = `<button type="button" class="mag-k" id="mag-k" title="Переключить магазин"><span class="mi">${ik("store")}</span><span class="mt"><b>${mag}</b><small>${MAGS.length > 1 ? `магазин ${MAGS.findIndex(m => m.n === MAG) + 1} из ${MAGS.length}` : "магазины"}</small></span>${ik("chevrons-up-down")}</button>
+    Обновлено ${ob ? ob.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "—"}<br><a href="#" id="vyhod">${ik("log-out").replace("<svg", '<svg style="width:13px;height:13px;vertical-align:-2px"')} Выйти</a>`;
+  $("#mag-k").onclick = e => { e.stopPropagation(); menyuMagazinov($("#mag-k")); };
   $("#foot").textContent = `Dashboard Ozon ${D.versiya || ""} · данные Ozon Seller API · заперто вашим паролем`;
   $("#vyhod").onclick = e => { e.preventDefault(); zabytKlyuch(); location.reload(); };
   // переключатель светлого и тёмного вида — запоминается на этом устройстве
@@ -49,6 +53,75 @@ function karkas() {
     razdel();                                    // графики перерисовываются в цветах нового вида
   };
   $("#vid-k").onclick = smenit; $("#vid-k-m").onclick = smenit;
+}
+
+// ── несколько магазинов ───────────────────────────────────────────────────────
+const imyaMag = m => (m.data && m.data.magazin) || m.nazvanie || `Магазин ${m.n}`;
+const MAG_MESTO = "do-mag:" + location.pathname;
+function vybratMag(n) {
+  const m = MAGS.find(x => x.n === n) || MAGS[0];
+  MAG = m.n; D = m.data; NS = null; SHA = null; ST = { period: "den", den: null };
+  try { localStorage.setItem(MAG_MESTO, String(MAG)); } catch (e) {}
+  karkas(); razdel();
+}
+function menyuMagazinov(kn) {
+  const bylo = $("#mag-menu"); if (bylo) { bylo.remove(); return; }
+  const r = kn.getBoundingClientRect(), vniz = r.top < innerHeight / 2;
+  document.body.insertAdjacentHTML("beforeend", `<div class="mag-menu" id="mag-menu" style="left:${Math.max(8, Math.min(r.left, innerWidth - 280))}px;${vniz ? `top:${r.bottom + 8}px` : `bottom:${innerHeight - r.top + 8}px`}">
+    <div class="mm-z">Магазины</div>
+    ${MAGS.map(m => `<button type="button" data-mag="${m.n}" class="${m.n === MAG ? "on" : ""}"><span class="mi">${ik("store")}</span><span class="mt">${esc(imyaMag(m))}${(m.data.oshibki || []).length ? `<small class="osh">есть ошибки сбора</small>` : ""}</span>${m.n === MAG ? ik("check") : ""}</button>`).join("")}
+    <button type="button" class="mm-plus" id="mm-plus"><span class="mi">${ik("plus")}</span><span class="mt">Добавить магазин</span></button></div>`);
+  const menu = $("#mag-menu");
+  menu.querySelectorAll("[data-mag]").forEach(b => b.onclick = () => { menu.remove(); if (+b.dataset.mag !== MAG) vybratMag(+b.dataset.mag); });
+  $("#mm-plus").onclick = () => { menu.remove(); oknoMagazin(); };
+  setTimeout(() => document.addEventListener("click", function z(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener("click", z); } }), 0);
+}
+// Окно «Добавить магазин»: всё, что нужно сделать, с кнопками прямо в свою копию на GitHub — без отсылок к инструкции.
+function oknoMagazin() {
+  const repo = (GH && GH.repo) || "", g = repo ? `https://github.com/${repo}` : "";
+  const k = (P.robot && P.robot.sleduyushchiy) || Math.max(...MAGS.map(m => m.n)) + 1;
+  const staryy = !(P.robot && P.robot.vse_sekrety);
+  if (k > 9) { soob("Больше девяти магазинов в одном Dashboard не поместится", true); return; }
+  const kn = (h, t) => repo ? `<a class="knopka" href="${h}" target="_blank" rel="noopener">${t} ${ik("external-link")}</a>` : "";
+  const imya = (n, chto) => `<div class="km"><code>${n}</code><button type="button" class="kop" data-kop="${n}">${ik("copy")} Копировать</button><em>${chto}</em></div>`;
+  let n = 0; const shag = (z, t) => `<div class="zs"><div class="zn">${++n}</div><div><b>${z}</b>${t}</div></div>`;
+  document.body.insertAdjacentHTML("beforeend", `<div class="okno-fon" id="okno-mag"><div class="okno zab-okno" role="dialog" aria-label="Добавить магазин">
+    <button type="button" class="okno-x" id="okno-x" aria-label="Закрыть">✕</button>
+    <h1>Добавить магазин</h1>
+    <p>Второй кабинет Ozon появится здесь же, под тем же адресом и паролем. Переключаться — нажатием на название магазина в левой колонке (на телефоне — вверху справа). Это будет магазин №${k}.</p>
+    ${staryy ? shag("Обновите робота — один раз", `<span>Ваша копия создана раньше, чем появились несколько магазинов, и робот пока видит только первый. Новый текст робота скопируется кнопкой ниже.</span>
+      <button type="button" class="knopka" id="kop-robot">${ik("copy")} Скопировать новый текст робота</button>
+      ${kn(`${g}/edit/main/.github/workflows/sbor.yml`, "Открыть файл робота на GitHub")}
+      <span>На открывшейся странице нажмите в большое поле с текстом, выделите всё — <b>Cmd + A</b> (на Windows <b>Ctrl + A</b>) — и вставьте скопированное: <b>Cmd + V</b> (<b>Ctrl + V</b>). Затем зелёная кнопка <b>Commit changes…</b> справа вверху и в появившемся окне ещё раз зелёная <b>Commit changes</b>.</span>`) : ""}
+    ${shag("Ключ продавца во втором кабинете", `<span>Войдите в Ozon <b>в кабинет нового магазина</b> (переключатель магазинов — вверху слева на seller.ozon.ru). Дальше <b>Настройки → API интеграции → Seller API → Сгенерировать ключ</b>. Название — <b>Dashboard Ozon</b>, цель — «Для личного использования», роль — только <b>Admin read only</b>, «Разрешённые сети» не заполняйте. Ozon покажет <b>Client-Id</b> и <b>API-ключ</b> один раз — не закрывайте окно, пока не перенесёте их в шаге ${n + 3}.</span>`)}
+    ${shag("Ключ рекламы — желательно", `<span>Там же: <b>Настройки → API интеграции → Performance API → Создать аккаунт</b>, нажмите на номер нового аккаунта → <b>Добавить ключ</b>. Появятся <b>Client ID</b> и <b>Client Secret</b>. Без этого ключа реклама нового магазина не попадёт в прибыль.</span>`)}
+    ${shag("Положите ключи в сейф GitHub", `<span>Кнопка ниже откроет форму нового секрета. В поле <b>Name</b> — имя (кнопка «Копировать»), в поле <b>Secret</b> — значение из Ozon, затем зелёная <b>Add secret</b>. Для каждой строки снова нажимайте <b>New repository secret</b>.</span>
+      ${kn(`${g}/settings/secrets/actions/new`, "Открыть сейф GitHub")}
+      ${imya(`OZON_CLIENT_ID_${k}`, "Client-Id ключа продавца — число")}
+      ${imya(`OZON_API_KEY_${k}`, "API-ключ продавца — длинная строка")}
+      ${imya(`OZON_PERF_CLIENT_ID_${k}`, "Client ID рекламы")}
+      ${imya(`OZON_PERF_SECRET_${k}`, "Client Secret рекламы")}
+      <span>Цифра <b>${k}</b> в конце имени — номер магазина. Пароль, пропуски и остальные секреты общие — новые не нужны.</span>`)}
+    ${shag("Запустите сбор", `<span>Первый сбор нового магазина забирает историю за 3 месяца — это 5–15 минут. Потом обновите страницу: магазин появится в списке. Название ему можно дать в <b>Настройках</b> (поле «Название магазина»), открыв его там.</span>
+      <button type="button" class="knopka" id="okno-sbor">${ik("refresh-cw")} Пересчитать сейчас</button>`)}
+  </div></div>`);
+  const okno = $("#okno-mag"), zakryt = () => okno.remove();
+  $("#okno-x").onclick = zakryt; okno.onclick = e => { if (e.target === okno) zakryt(); };
+  okno.querySelectorAll("[data-kop]").forEach(b => b.onclick = () => kopirovat(b.dataset.kop, b));
+  $("#okno-sbor").onclick = () => zapusk("sbor.yml", "Сбор запущен — через 5–15 минут обновите страницу");
+  if ($("#kop-robot")) $("#kop-robot").onclick = async () => {
+    const b = $("#kop-robot");
+    try {   // свежий текст робота берётся прямо из открытого образца
+      const r = await fetch("https://api.github.com/repos/nikitabuilding-code/dashboard-ozon/contents/.github/workflows/sbor.yml", { cache: "no-store" });
+      const o = await r.json(); if (!r.ok) throw new Error(o.message || r.status);
+      await kopirovat(b64iz(o.content), b, "Текст робота скопирован");
+    } catch (e) { soob("Не получилось скопировать: " + e.message, true); }
+  };
+}
+async function kopirovat(tekst, b, gotovo) {
+  try { await navigator.clipboard.writeText(tekst); }
+  catch (e) { const t = document.createElement("textarea"); t.value = tekst; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  const bylo = b.innerHTML; b.innerHTML = `${ik("check")} ${gotovo || "Скопировано"}`; b.classList.add("ok"); setTimeout(() => { b.innerHTML = bylo; b.classList.remove("ok"); }, 1800);
 }
 
 function razdel() {
@@ -329,10 +402,11 @@ function tovary() {
 
 // ── «Настройки» ───────────────────────────────────────────────────────────────
 let NS = null, SHA = null;
+const putNastroek = () => MAG === 1 ? "/contents/nastroyki.json" : `/contents/magaziny/${MAG}/nastroyki.json`;
 async function nastroyki() {
   $("#ekran").innerHTML = `<div class="shapka"><div><h1>Настройки</h1><div class="pod">сохраняются в вашу копию на GitHub, пересчёт — сам</div></div></div><div class="card"><div class="pusto-blok">Загружаю настройки…</div></div>`;
   try {
-    const r = await gh("/contents/nastroyki.json");
+    const r = await gh(putNastroek());
     if (r.status === 404) { NS = null; SHA = null; }
     else { const o = await r.json(); if (!r.ok) throw new Error(o.message || r.status); NS = JSON.parse(b64iz(o.content)); SHA = o.sha; }
     NS = NS || { magazin: "", tovary: {}, nalog: [{ s: "2020-01-01", rezhim: "usn_dohody", usn: 0.06, nds: 0 }], opr: [], istoriya_s: null };
@@ -347,7 +421,7 @@ const chislo = v => { const x = parseFloat(String(v).replace(/\s/g, "").replace(
 function risovatNastroyki() {
   const T = a => D.tovary[a] || { nazvanie: a, foto: "" };
   const tov = Object.entries(NS.tovary).sort((a, b) => (a[1].skryt - b[1].skryt) || a[0].localeCompare(b[0]));
-  $("#ekran").innerHTML = `<div class="shapka"><div><h1>Настройки</h1><div class="pod">сохраняются в вашу копию на GitHub, пересчёт — сам</div></div>
+  $("#ekran").innerHTML = `<div class="shapka"><div><h1>Настройки</h1><div class="pod">магазин «${esc(imyaMag(MAGS.find(m => m.n === MAG) || { n: MAG, data: D }))}» · сохраняются в вашу копию на GitHub, пересчёт — сам</div></div>
     <div class="ryad"><button class="knopka" id="sohr">${ik("save")} Сохранить</button></div></div>
   <div class="grid">
     <section class="card s12"><div class="hd"><div class="ico">${ik("package")}</div><div><h2>Товары</h2><div class="s">себестоимость одной штуки с доставкой до склада Ozon</div></div></div>
@@ -379,6 +453,11 @@ function risovatNastroyki() {
       <div class="pole"><label>Считать историю с</label><input class="vvod" type="date" id="istoriya" value="${esc(NS.istoriya_s || D.istoriya_s || "")}"></div>
       <p class="podskazka">Раньше этой даты данные не собираются. Новые дни подкачиваются по 120 за запуск.</p></section>
 
+    <section class="card s12 v"><div class="hd"><div class="ico">${ik("store")}</div><div><h2>Магазины</h2><div class="s">все кабинеты Ozon под одним адресом и паролем</div></div></div>
+      <div class="mag-spisok">${MAGS.map(m => `<button type="button" class="${m.n === MAG ? "on" : ""}" data-vm="${m.n}"><span class="mi">${ik("store")}</span><span class="mt"><b>${esc(imyaMag(m))}</b><small>№${m.n} · ключи <code>${m.n === 1 ? "OZON_CLIENT_ID" : "OZON_CLIENT_ID_" + m.n}</code>${(m.data.oshibki || []).length ? ` · <i class="osh">ошибки сбора: ${esc(m.data.oshibki[0])}</i>` : ""}</small></span>${m.n === MAG ? `<em>открыт</em>` : `<em>открыть</em>`}</button>`).join("")}</div>
+      <button class="knopka vtor malaya" id="plus-mag">${ik("plus")} Добавить магазин</button>
+      <p class="podskazka" style="margin:12px 0 0">Настройки выше — только для открытого магазина. Убрать магазин — удалите его ключи с номером в сейфе GitHub; история останется в копии.</p></section>
+
     <section class="card s12 g"><div class="hd"><div class="ico">${ik("refresh-cw")}</div><div><h2>Сбор и обновления</h2><div class="s">данные собираются каждое утро сами</div></div></div>
       <div class="ryad"><button class="knopka vtor" id="sobrat">${ik("refresh-cw")} Пересчитать сейчас</button><button class="knopka vtor" id="obnovit">${ik("download")} Обновить инструмент</button></div>
       <div id="zapuski" class="mut" style="margin-top:14px"></div></section>
@@ -388,6 +467,8 @@ function risovatNastroyki() {
   $("#plus-nalog").onclick = () => { sobrat(); const p = NS.nalog[NS.nalog.length - 1] || { usn: 0.06, nds: 0, rezhim: "usn_dohody" }; NS.nalog.push({ ...p, s: new Date().toISOString().slice(0, 10) }); risovatNastroyki(); };
   $("#plus-opr").onclick = () => { sobrat(); (NS.opr = NS.opr || []).push({ s: new Date().toISOString().slice(0, 10), summa: 0 }); risovatNastroyki(); };
   $("#sohr").onclick = sohranit;
+  $("#plus-mag").onclick = oknoMagazin;
+  pod("[data-vm]", b => b.onclick = () => { if (+b.dataset.vm !== MAG) { vybratMag(+b.dataset.vm); location.hash = "#nastroyki"; } });
   $("#sobrat").onclick = () => zapusk("sbor.yml", "Пересчёт запущен — новые цифры появятся через 3–5 минут");
   $("#obnovit").onclick = () => { if (confirm("Подтянуть свежую версию робота? Настройки и история не изменятся.")) zapusk("obnovit.yml", "Обновление запущено — через пару минут нажмите «Пересчитать сейчас»"); };
   statusZapuskov();
@@ -404,7 +485,7 @@ async function sohranit() {
   sobrat(); const b = $("#sohr"); b.disabled = true;
   try {
     const osh = proverit(NS); if (osh) throw new Error("проверьте поле: " + osh);
-    const r = await gh("/contents/nastroyki.json", "PUT", { message: "Настройки изменены на странице", ...(SHA ? { sha: SHA } : {}),
+    const r = await gh(putNastroek(), "PUT", { message: "Настройки изменены на странице", ...(SHA ? { sha: SHA } : {}),
       content: b64v(JSON.stringify(NS, null, 2) + "\n") });
     const o = await r.json();
     if (r.status === 409) throw new Error("настройки только что изменились в другом окне — обновите страницу");
@@ -475,7 +556,13 @@ function zapomnennyy() {
   return null;
 }
 function zabytKlyuch() { try { localStorage.removeItem(MESTO); } catch (e) {} }
-function zapusti(p) { D = p.data; GH = p.gh || null; karkas(); razdel(); window.addEventListener("hashchange", razdel); }
+function zapusti(p) {
+  P = p; GH = p.gh || null;
+  MAGS = (p.magaziny && p.magaziny.length) ? p.magaziny : [{ n: 1, nazvanie: (p.data && p.data.magazin) || "", data: p.data }];
+  let n = 0; try { n = +localStorage.getItem(MAG_MESTO) || 0; } catch (e) {}
+  window.addEventListener("hashchange", razdel);
+  vybratMag(MAGS.some(m => m.n === n) ? n : MAGS[0].n);
+}
 function oknoZabyl(sh) {
   const repo = sh.repo || "", gh = repo ? `https://github.com/${repo}` : "";
   const sm = repo ? `<a class="knopka" href="${gh}/settings/secrets/actions/PAROL" target="_blank" rel="noopener">Открыть смену пароля на GitHub ↗</a>`
