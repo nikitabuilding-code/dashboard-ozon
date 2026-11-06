@@ -109,14 +109,14 @@ function oknoMagazin() {
   $("#okno-x").onclick = zakryt; okno.onclick = e => { if (e.target === okno) zakryt(); };
   okno.querySelectorAll("[data-kop]").forEach(b => b.onclick = () => kopirovat(b.dataset.kop, b));
   $("#okno-sbor").onclick = () => zapusk("sbor.yml", "Сбор запущен — через 5–15 минут обновите страницу");
-  if ($("#kop-robot")) $("#kop-robot").onclick = async () => {
-    const b = $("#kop-robot");
-    try {   // свежий текст робота берётся прямо из открытого образца
-      const r = await fetch("https://api.github.com/repos/nikitabuilding-code/dashboard-ozon/contents/.github/workflows/sbor.yml", { cache: "no-store" });
-      const o = await r.json(); if (!r.ok) throw new Error(o.message || r.status);
-      await kopirovat(b64iz(o.content), b, "Текст робота скопирован");
-    } catch (e) { soob("Не получилось скопировать: " + e.message, true); }
-  };
+  if ($("#kop-robot")) $("#kop-robot").onclick = () => kopRobot($("#kop-robot"));
+}
+async function kopRobot(b) {
+  try {   // свежий текст робота берётся прямо из открытого образца
+    const r = await fetch("https://api.github.com/repos/nikitabuilding-code/dashboard-ozon/contents/.github/workflows/sbor.yml", { cache: "no-store" });
+    const o = await r.json(); if (!r.ok) throw new Error(o.message || r.status);
+    await kopirovat(b64iz(o.content), b, "Текст робота скопирован");
+  } catch (e) { soob("Не получилось скопировать: " + e.message, true); }
 }
 async function kopirovat(tekst, b, gotovo) {
   try { await navigator.clipboard.writeText(tekst); }
@@ -459,6 +459,8 @@ function risovatNastroyki() {
       <p class="podskazka" style="margin:12px 0 0">Настройки выше — только для открытого магазина. Убрать магазин — удалите его ключи с номером в сейфе GitHub; история останется в копии.</p></section>
 
     <section class="card s12 g"><div class="hd"><div class="ico">${ik("refresh-cw")}</div><div><h2>Сбор и обновления</h2><div class="s">данные собираются каждое утро сами</div></div></div>
+      ${P && !(P.robot && P.robot.vse_sekrety) && GH && GH.repo ? `<div class="vnim robot-st" style="margin:0 0 14px"><div class="ico">${ik("triangle-alert")}</div><div><b>Обновите файл робота — один раз, 2 минуты</b><span>Ваша копия создана до 6 ноября, и её файл робота старый: утренний сбор по расписанию может не запускаться, второй магазин не добавить, а на GitHub висят жёлтые предупреждения. <br>1. Кнопка «Скопировать новый текст робота» ниже.<br>2. Кнопка «Открыть файл робота на GitHub».<br>3. Нажмите в большое поле с текстом, затем <b>Cmd + A</b> и <b>Cmd + V</b>.<br>4. Зелёная <b>Commit changes…</b> справа вверху, затем ещё раз <b>Commit changes</b> в окне.<br>Это сообщение исчезнет после ближайшего сбора.</span>
+        <div class="ryad" style="margin-top:10px"><button type="button" class="knopka malaya" id="kop-robot-n">${ik("copy")} Скопировать новый текст робота</button><a class="knopka vtor malaya" href="https://github.com/${GH.repo}/edit/main/.github/workflows/sbor.yml" target="_blank" rel="noopener">Открыть файл робота на GitHub ${ik("external-link")}</a></div></div></div>` : ""}
       <div class="ryad"><button class="knopka vtor" id="sobrat">${ik("refresh-cw")} Пересчитать сейчас</button><button class="knopka vtor" id="obnovit">${ik("download")} Обновить инструмент</button></div>
       <div id="zapuski" class="mut" style="margin-top:14px"></div></section>
   </div>`;
@@ -468,6 +470,7 @@ function risovatNastroyki() {
   $("#plus-opr").onclick = () => { sobrat(); (NS.opr = NS.opr || []).push({ s: new Date().toISOString().slice(0, 10), summa: 0 }); risovatNastroyki(); };
   $("#sohr").onclick = sohranit;
   $("#plus-mag").onclick = oknoMagazin;
+  if ($("#kop-robot-n")) $("#kop-robot-n").onclick = () => kopRobot($("#kop-robot-n"));
   pod("[data-vm]", b => b.onclick = () => { if (+b.dataset.vm !== MAG) { vybratMag(+b.dataset.vm); location.hash = "#nastroyki"; } });
   $("#sobrat").onclick = () => zapusk("sbor.yml", "Пересчёт запущен — новые цифры появятся через 3–5 минут");
   $("#obnovit").onclick = () => { if (confirm("Подтянуть свежую версию робота? Настройки и история не изменятся.")) zapusk("obnovit.yml", "Обновление запущено — через пару минут нажмите «Пересчитать сейчас»"); };
@@ -504,7 +507,8 @@ async function zapusk(zadacha, tekst) {
 async function statusZapuskov() {
   try { const r = await gh("/actions/runs?per_page=5"); const o = await r.json(); if (!r.ok) return;
     const itog = z => z.status !== "completed" ? "идёт…" : z.conclusion === "success" ? "готово" : "ошибка";
-    $("#zapuski").innerHTML = "Последние запуски: " + (o.workflow_runs || []).map(z => `${esc(z.name)} — ${itog(z)} (${new Date(z.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})`).join(" · ");
+    const kak = z => z.event === "schedule" ? "по расписанию" : z.event === "workflow_dispatch" ? "вручную" : esc(z.event);
+    $("#zapuski").innerHTML = "Последние запуски: " + (o.workflow_runs || []).map(z => `${esc(z.name)} ${kak(z)} — ${itog(z)} (${new Date(z.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})`).join(" · ");
   } catch (e) {}
 }
 // проверка настроек перед сохранением — пределы от опечаток, а не от хозяина

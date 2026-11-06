@@ -358,3 +358,4 @@ html.svetlo .okno .km{background:#fff;border-color:var(--do-line)}html.svetlo .o
 html.svetlo .kop{color:#2F64E0;background:rgba(47,100,224,.08);border-color:rgba(47,100,224,.3)}
 .mag-menu{box-sizing:border-box;max-width:calc(100vw - 20px)}
 @media(max-width:760px){.mag-menu{left:auto!important;right:10px}}
+.vnim span b{display:inline}.vnim.robot-st{align-items:flex-start}.vnim.robot-st span{line-height:1.6}

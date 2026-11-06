@@ -25,7 +25,7 @@ ISTORIYA_DNEY = 90
 POKAZYVAT_DNEY = 120
 NASTROYKI = os.path.join(I.KOREN, "nastroyki.json")
 DATA = os.path.join(I.KOREN, "sayt", "data.json")
-VERSIYA = "2026.11.10"
+VERSIYA = "2026.11.11"
 MAKS_MAGAZINOV = 9
 KLYUCHI = ("OZON_CLIENT_ID", "OZON_API_KEY", "OZON_PERF_CLIENT_ID", "OZON_PERF_SECRET")
 
@@ -193,8 +193,8 @@ def otpravit_na_stranicu(paket, robot):
     adres = propusk.split(":", 1)[0]
     gh = {"repo": os.environ.get("GITHUB_REPOSITORY") or "", "token": os.environ.get("PROPUSK_GITHUB") or ""}
     try:
-        # data — первый магазин (так страница старой версии тоже откроется), magaziny — все
-        shifr.otpravit(shifr.zaperet({"data": paket[0]["data"], "magaziny": paket, "robot": robot, "gh": gh},
+        # все магазины — в magaziny (первый магазин отдельно не дублируется: страница берёт его оттуда)
+        shifr.otpravit(shifr.zaperet({"magaziny": paket, "robot": robot, "gh": gh},
                                      parol, adres, gh["repo"]), propusk)
     except Exception as e:
         print(f"⚠ Страница не обновлена: {e}", flush=True)
