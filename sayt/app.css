@@ -359,3 +359,8 @@ html.svetlo .kop{color:#2F64E0;background:rgba(47,100,224,.08);border-color:rgba
 .mag-menu{box-sizing:border-box;max-width:calc(100vw - 20px)}
 @media(max-width:760px){.mag-menu{left:auto!important;right:10px}}
 .vnim span b{display:inline}.vnim.robot-st{align-items:flex-start}.vnim.robot-st span{line-height:1.6}
+.budilnik{margin-top:16px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--do-line);display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.bud-shapka{display:flex;gap:12px;flex:1;min-width:260px}.bud-shapka .ico{flex:none}
+.bud-shapka b{display:block;margin-bottom:3px}.bud-shapka span{display:block;color:var(--do-muted);font-size:13px;font-weight:600;line-height:1.55}.bud-shapka span b{display:inline}
+.bud-vkl{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:750;color:#5FE3B0;background:rgba(43,227,155,.12);border:1px solid rgba(43,227,155,.4)}
+html.svetlo .budilnik{background:#F5F7FC}html.svetlo .bud-vkl{color:#1F9D6B}

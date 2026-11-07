@@ -462,7 +462,8 @@ function risovatNastroyki() {
       ${P && !(P.robot && P.robot.vse_sekrety) && GH && GH.repo ? `<div class="vnim robot-st" style="margin:0 0 14px"><div class="ico">${ik("triangle-alert")}</div><div><b>Обновите файл робота — один раз, 2 минуты</b><span>Ваша копия создана до 6 ноября, и её файл робота старый: утренний сбор по расписанию может не запускаться, второй магазин не добавить, а на GitHub висят жёлтые предупреждения. <br>1. Кнопка «Скопировать новый текст робота» ниже.<br>2. Кнопка «Открыть файл робота на GitHub».<br>3. Нажмите в большое поле с текстом, затем <b>Cmd + A</b> и <b>Cmd + V</b>.<br>4. Зелёная <b>Commit changes…</b> справа вверху, затем ещё раз <b>Commit changes</b> в окне.<br>Это сообщение исчезнет после ближайшего сбора.</span>
         <div class="ryad" style="margin-top:10px"><button type="button" class="knopka malaya" id="kop-robot-n">${ik("copy")} Скопировать новый текст робота</button><a class="knopka vtor malaya" href="https://github.com/${GH.repo}/edit/main/.github/workflows/sbor.yml" target="_blank" rel="noopener">Открыть файл робота на GitHub ${ik("external-link")}</a></div></div></div>` : ""}
       <div class="ryad"><button class="knopka vtor" id="sobrat">${ik("refresh-cw")} Пересчитать сейчас</button><button class="knopka vtor" id="obnovit">${ik("download")} Обновить инструмент</button></div>
-      <div id="zapuski" class="mut" style="margin-top:14px"></div></section>
+      <div id="zapuski" class="mut" style="margin-top:14px"></div>
+      <div class="budilnik" id="budilnik"></div></section>
   </div>`;
   const pod = (sel, fn) => document.querySelectorAll(sel).forEach(fn);
   pod("[data-ud]", b => b.onclick = () => { sobrat(); NS[b.dataset.ud].splice(+b.dataset.i, 1); risovatNastroyki(); });
@@ -474,7 +475,27 @@ function risovatNastroyki() {
   pod("[data-vm]", b => b.onclick = () => { if (+b.dataset.vm !== MAG) { vybratMag(+b.dataset.vm); location.hash = "#nastroyki"; } });
   $("#sobrat").onclick = () => zapusk("sbor.yml", "Пересчёт запущен — новые цифры появятся через 3–5 минут");
   $("#obnovit").onclick = () => { if (confirm("Подтянуть свежую версию робота? Настройки и история не изменятся.")) zapusk("obnovit.yml", "Обновление запущено — через пару минут нажмите «Пересчитать сейчас»"); };
-  statusZapuskov();
+  statusZapuskov(); budilnik();
+}
+// Будильник на сервере: GitHub иногда пропускает утренний запуск по расписанию — сервер проверит и запустит сам.
+const MOY_ADRES = location.pathname.split("/").filter(Boolean).pop() || "";
+async function budilnik(sost) {
+  const box = $("#budilnik"); if (!box) return;
+  if (!sost) { try { const r = await fetch(`../api/budilnik?adres=${MOY_ADRES}`, { cache: "no-store" }); sost = await r.json(); } catch (e) { return; } }
+  box.innerHTML = `<div class="bud-shapka"><div class="ico">${ik("refresh-cw")}</div><div><b>Будильник на сервере ${sost.vklyuchen ? `<span class="bud-vkl">включён</span>` : ""}</b>
+    <span>${sost.vklyuchen ? `В 8:10 по Москве сервер проверяет, пришли ли свежие цифры, и если нет — сам запускает робота (в 8:50 — ещё раз, если первый запуск упал).${sost.posledniy ? `<br>Последняя проверка${sost.kogda ? " " + esc(sost.kogda) : ""}: <b>${esc(sost.posledniy)}</b>` : ""}`
+      : `GitHub иногда пропускает утренний запуск по расписанию — тогда цифры за вчера не приходят. Будильник: в 8:10 по Москве сервер vibeforge7.com проверит, пришли ли свежие цифры, и если нет — сам запустит робота. Для этого сервер получит пропуск к вашей копии на GitHub (тот же, которым эта страница сохраняет настройки). Ваш пароль и ключи Ozon сервер не получит.`}</span></div></div>
+    <button type="button" class="knopka ${sost.vklyuchen ? "vtor" : ""} malaya" id="bud-k">${sost.vklyuchen ? "Выключить будильник" : `${ik("check")} Включить будильник`}</button>`;
+  $("#bud-k").onclick = async () => {
+    const b = $("#bud-k"); b.disabled = true;
+    try {
+      if (!GH || !GH.token) throw new Error("нет пропуска GitHub (секрет PROPUSK_GITHUB)");
+      const r = await fetch("../api/budilnik", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adres: MOY_ADRES, token: GH.token, vkl: !sost.vklyuchen }) });
+      const o = await r.json(); if (!r.ok) throw new Error(o.oshibka || r.status);
+      soob(o.vklyuchen ? "Будильник включён — с завтрашнего утра" : "Будильник выключен"); budilnik(o);
+    } catch (e) { soob("Не получилось: " + e.message, true); b.disabled = false; }
+  };
 }
 function sobrat() {
   document.querySelectorAll("tr[data-a]").forEach(r => { const t = NS.tovary[r.dataset.a], v = k => r.querySelector(`[data-k="${k}"]`);
